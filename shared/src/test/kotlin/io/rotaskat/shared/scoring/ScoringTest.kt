@@ -177,14 +177,46 @@ class ScoringTest {
     }
 
     @Test
-    fun `Schub verdoppelt nur wenn die Hausregel es vorsieht`() {
+    fun `Jeder Schub verdoppelt die Augen`() {
         val r = round(
             RamschGame,
             declarerSeat = null,
             ramsch = RamschResult(loserSeat = 1, cardPoints = 40, pushes = 2),
         )
-        assertEquals(-80, Scoring.score(r).halfPoints[1])
-        assertEquals(-320, Scoring.score(r, ScoringConfig(pushDoubles = true)).halfPoints[1])
+        // Voreinstellung: zwei Schuebe vervierfachen 40 auf 160.
+        assertEquals(-320, Scoring.score(r).halfPoints[1])
+        assertEquals(-160.0, Scoring.score(r).points[1])
+        // Abschaltbar, falls die Hausregel sich aendert.
+        assertEquals(-80, Scoring.score(r, ScoringConfig(pushDoubles = false)).halfPoints[1])
+    }
+
+    @Test
+    fun `Zu viele Schuebe werden abgelehnt statt still zu ueberlaufen`() {
+        // 1 shl 32 ist in Kotlin wieder 1, weil nur die unteren 5 Bit zaehlen.
+        // Ohne Obergrenze waere das Ergebnis still falsch und trotzdem
+        // nullsummig, also durch die Invariante nicht zu entdecken.
+        val invalid = round(
+            RamschGame,
+            declarerSeat = null,
+            ramsch = RamschResult(loserSeat = 1, cardPoints = 100, pushes = 32),
+        )
+        assertTrue(Scoring.validate(invalid).isNotEmpty())
+        assertFailsWith<IllegalArgumentException> { Scoring.score(invalid) }
+    }
+
+    @Test
+    fun `Schuebe bis zur Obergrenze bleiben nullsummig und positiv`() {
+        for (pushes in 0..Scoring.MAX_PUSHES) {
+            val score = Scoring.score(
+                round(
+                    RamschGame,
+                    declarerSeat = null,
+                    ramsch = RamschResult(loserSeat = 1, cardPoints = Scoring.MAX_CARD_POINTS, pushes = pushes),
+                )
+            )
+            assertEquals(0, score.sum(), "pushes=$pushes")
+            assertTrue(score.halfPoints[1]!! < 0, "Verlierer muss negativ bleiben, pushes=$pushes")
+        }
     }
 
     // --- Ueberreizt ---
@@ -199,6 +231,35 @@ class ScoringTest {
         assertEquals(-108, score.halfPoints[0])
         assertEquals(54, score.halfPoints[1])
         assertEquals(0, score.sum())
+    }
+
+    @Test
+    fun `Ueberreizt genau auf dem Spielwert bleibt beim Spielwert`() {
+        val d = SuitGame(Suit.DIAMONDS, matadors = 1)
+        assertEquals(18, Scoring.overbidValue(d, bid = 18))
+        assertEquals(27, Scoring.overbidValue(d, bid = 19))
+        assertEquals(27, Scoring.overbidValue(d, bid = 27))
+        assertEquals(36, Scoring.overbidValue(d, bid = 28))
+    }
+
+    @Test
+    fun `Ein absurder Reizwert haengt nicht die Berechnung auf`() {
+        // Frueher wurde in Einerschritten hochgezaehlt: bei einem sehr grossen
+        // bid lief der Zaehler ins Int-Overflow und die Schleife terminierte
+        // nie. Jetzt aufrundende Division mit Long-Zwischenrechnung.
+        val d = SuitGame(Suit.DIAMONDS, matadors = 1)
+        val value = Scoring.overbidValue(d, bid = Int.MAX_VALUE)
+        assertTrue(value > 0, "Ergebnis darf nicht ins Negative kippen")
+
+        // Ueber score() ist der Wert ohnehin auf MAX_BID begrenzt.
+        val invalid = round(d, bid = Int.MAX_VALUE, overbid = true)
+        assertTrue(Scoring.validate(invalid).isNotEmpty())
+    }
+
+    @Test
+    fun `Reizwerte unterhalb von 18 werden abgelehnt`() {
+        val invalid = round(SuitGame(Suit.CLUBS, 1), bid = 17, overbid = true)
+        assertTrue(Scoring.validate(invalid).isNotEmpty())
     }
 
     // --- Invarianten ---

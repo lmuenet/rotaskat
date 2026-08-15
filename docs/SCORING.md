@@ -90,12 +90,22 @@ Damit ist der Ramsch genauso nullsummig wie ein normales Spiel.
 
 **Jungfrau** (ein Spieler hat keinen Stich bekommen) verdoppelt `A`.
 
-**Durchmarsch** (ein Spieler bekommt alle Stiche) wird wie ein gewonnener
-Grand gewertet, also nach der normalen Verteilung: `+V` fuer ihn, `-V/2` fuer
-die anderen. Der Wert steht in `ScoringConfig.durchmarschValue`.
+**Jeder Schub** beim Schieberamsch verdoppelt die Augen: `A * 2^Schuebe`.
+Umschaltbar ueber `ScoringConfig.pushDoubles`, voreingestellt auf `true`.
+Die Anzahl der Schuebe ist auf `MAX_PUSHES` = 5 begrenzt. Das ist keine
+Spielregel, sondern ein Ueberlaufschutz: `1 shl pushes` nutzt in Kotlin nur
+die unteren 5 Bit, `1 shl 32` waere also wieder `1`. Ohne Grenze waere das
+Ergebnis still falsch **und trotzdem nullsummig** und damit durch die
+Invariante nicht zu entdecken.
 
-Ob jeder **Schub** beim Schieberamsch die Augen verdoppelt, steht in
-`ScoringConfig.pushDoubles` und ist derzeit auf `false` voreingestellt.
+**Durchmarsch** (ein Spieler bekommt alle Stiche) zaehlt 120, also alle Augen,
+und wird nach der normalen Verteilung abgerechnet: `+120` fuer ihn, `-60` fuer
+die anderen beiden. Umschaltbar ueber `ScoringConfig.durchmarschValue`.
+
+**Augengleichstand**: haben zwei Spieler gleich viele Augen, entscheidet der
+Tisch. Die App fragt in diesem Fall kurz nach, wer als Verlierer gilt, und
+speichert die Antwort als `loserSeat`. Es gibt bewusst keine automatische
+Regel dafuer.
 
 ## Vierertisch
 
@@ -130,10 +140,27 @@ Wenn sich also in Runde 400 herausstellt, dass eine Hausregel anders gemeint
 war, wird `round_score` neu berechnet und die Historie stimmt wieder. Waeren
 nur die Punkte gespeichert, waere die Rangliste unrettbar.
 
-## Offene Punkte
+## Wertebereiche
 
-- Wert eines Durchmarsch: aktuell 120, noch nicht bestaetigt.
-- Verdoppeln Schuebe beim Schieberamsch die Augen? Aktuell nein.
-- Augengleichstand im Ramsch: wer verliert, wenn zwei Spieler gleich viele
-  Augen haben?
-- Zaehlt Kontra/Re bei euch ueberhaupt, und gibt es Bock- oder Ramschrunden?
+Damit still falsche Ergebnisse nicht in der Historie landen, prueft
+`Scoring.validate()` die Rohdaten, bevor gerechnet wird:
+
+| Feld | Bereich | Warum |
+|------|---------|-------|
+| `seatCount` | 3 oder 4 | Skat wird zu dritt gespielt |
+| `bid` | 18 bis 264 | 18 ist das niedrigste Gebot, 264 der hoechste Spielwert (Grand ouvert mit 4) |
+| `cardPoints` | 0 bis 120 | Augen einer Partei |
+| `pushes` | 0 bis 5 | Ueberlaufschutz, siehe oben |
+| `matadors` | mindestens 1 | "mit 1" bzw. "ohne 1" ist das Minimum |
+
+Ohne die `bid`-Grenze konnte `overbidValue()` in eine Endlosschleife laufen:
+frueher wurde in Schritten des Grundwerts hochgezaehlt, was bei einem sehr
+grossen Gebot ins Int-Overflow lief und die Abbruchbedingung nie erfuellte.
+Heute wird aufrundend dividiert, mit Long als Zwischenrechnung.
+
+## Noch offen
+
+- Gibt es bei euch Bockrunden oder Ramschrunden (Runden mit erhoehter
+  Wertung nach bestimmten Ereignissen)?
+- Wird der Geber mitgezaehlt, also gibt es eine feste Rundenzahl pro Abend
+  ("jeder gibt dreimal"), oder wird gespielt bis Schluss ist?

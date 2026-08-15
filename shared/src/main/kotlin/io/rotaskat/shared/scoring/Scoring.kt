@@ -20,7 +20,7 @@ data class ScoringConfig(
     /** Jungfrau (ein Spieler ohne Stich) verdoppelt die Augen im Ramsch. */
     val jungfrauDoubles: Boolean = true,
     /** Jeder Schub beim Schieberamsch verdoppelt die Augen. */
-    val pushDoubles: Boolean = false,
+    val pushDoubles: Boolean = true,
     /** Spielwert eines Durchmarsch, gewertet wie ein gewonnener Grand. */
     val durchmarschValue: Int = 120,
 )
@@ -54,6 +54,22 @@ object Scoring {
     /** Hoechstmoegliche Augenzahl einer Partei. */
     const val MAX_CARD_POINTS = 120
 
+    /** Niedrigstes moegliches Reizgebot. */
+    const val MIN_BID = 18
+
+    /**
+     * Hoechster regulaerer Spielwert: Grand ouvert mit 4 ergibt 24 * 11 = 264.
+     * Hoeher kann auch nicht gereizt werden.
+     */
+    const val MAX_BID = 264
+
+    /**
+     * Obergrenze fuer Schuebe beim Schieberamsch. Real sind es hoechstens
+     * zwei bis drei, die Grenze existiert vor allem, damit die Verdopplung
+     * `1 shl pushes` nicht ins Int-Overflow laufen kann.
+     */
+    const val MAX_PUSHES = 5
+
     /**
      * Spielstufe: Spitzen + 1 fuer das Spiel selbst + je 1 pro Zusatzstufe.
      */
@@ -86,10 +102,21 @@ object Scoring {
         else -> {
             val base = baseValue(declaration)
             val target = maxOf(gameValue(declaration), bid)
-            var value = base
-            while (value < target) value += base
-            value
+            // Aufrundende Division statt Hochzaehlen in einer Schleife: bei
+            // einem grossen bid liefe der Zaehler sonst ins Int-Overflow und
+            // die Schleife wuerde nie terminieren.
+            ceilToMultiple(target, base)
         }
+    }
+
+    /** Kleinstes Vielfaches von [multiple], das [value] erreicht. */
+    private fun ceilToMultiple(value: Int, multiple: Int): Int {
+        require(multiple > 0) { "multiple muss positiv sein" }
+        if (value <= multiple) return multiple
+        // Zwischenrechnung in Long, damit auch ein absurd hoher Wert nicht
+        // still ins Negative kippt.
+        val rounded = ((value.toLong() + multiple - 1) / multiple) * multiple
+        return rounded.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
     /**
@@ -198,7 +225,9 @@ object Scoring {
                 } else if (durchmarsch != null && durchmarsch == round.sittingOutSeat) {
                     errors += "Der Aussetzende kann keinen Durchmarsch machen"
                 }
-                if (ramsch.pushes < 0) errors += "pushes darf nicht negativ sein"
+                if (ramsch.pushes !in 0..MAX_PUSHES) {
+                    errors += "pushes ${ramsch.pushes} liegt ausserhalb 0..$MAX_PUSHES"
+                }
             }
         } else {
             val declarer = round.declarerSeat
@@ -221,6 +250,10 @@ object Scoring {
             }
             if (round.overbid && round.bid == null) {
                 errors += "Ueberreizt ohne Reizwert laesst sich nicht abrechnen"
+            }
+            val bid = round.bid
+            if (bid != null && bid !in MIN_BID..MAX_BID) {
+                errors += "Reizwert $bid liegt ausserhalb $MIN_BID..$MAX_BID"
             }
         }
 
