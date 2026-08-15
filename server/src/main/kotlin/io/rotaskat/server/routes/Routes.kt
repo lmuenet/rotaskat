@@ -15,6 +15,8 @@ import io.rotaskat.server.notFound
 import io.rotaskat.server.repo.DeviceIdentity
 import io.rotaskat.server.repo.RotaskatRepository
 import io.rotaskat.server.sync.SyncService
+import io.rotaskat.shared.api.ClubLookupRequest
+import io.rotaskat.shared.api.ClubLookupResponse
 import io.rotaskat.shared.api.JoinClubRequest
 import io.rotaskat.shared.api.JoinClubResponse
 import io.rotaskat.shared.api.LeaderboardResponse
@@ -46,6 +48,21 @@ private fun ApplicationCall.device(): DeviceIdentity =
  * das Token ja erst ausgestellt.
  */
 fun Route.clubRoutes(repository: RotaskatRepository) {
+    /**
+     * Kader zu einem Einladungscode. Der Beitritt braucht eine Spieler-Id, und
+     * die kann der Beitretende nur waehlen, wenn er den Kader vorher sieht.
+     *
+     * Antwortet bei unbekanntem Code mit derselben Meldung wie der Beitritt -
+     * zwei unterschiedliche Texte waeren ein Orakel fuer gueltige Codes.
+     */
+    post("/clubs/lookup") {
+        val request = call.receive<ClubLookupRequest>()
+        val club = repository.findClubByInviteCode(request.inviteCode.trim()) ?: denyJoin()
+        // Nur aktive Mitglieder: ein stillgelegter Spieler soll nicht als
+        // waehlbar erscheinen, der Beitritt wuerde ihn ohnehin ablehnen.
+        call.respond(ClubLookupResponse(club.copy(roster = club.roster.filter { it.active })))
+    }
+
     post("/clubs/join") {
         val request = call.receive<JoinClubRequest>()
 

@@ -196,6 +196,8 @@ class SessionMessageTest {
         override fun observePendingSyncCount(): Flow<Int> = flowOf(0)
         override suspend fun club(): Club = TEST_CLUB
         override suspend fun saveClub(club: Club) = error("Im Test nicht benutzt")
+        override suspend fun adoptLocalData(club: Club, playerMapping: Map<String, String>) =
+            error("Im Test nicht benutzt")
         override suspend fun startSession(
             seatCount: Int,
             seats: Map<Int, String>,

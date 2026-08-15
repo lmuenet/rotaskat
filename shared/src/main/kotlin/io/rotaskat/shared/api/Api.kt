@@ -34,6 +34,32 @@ val RotaskatJson: Json = Json {
 // --- Vereinsbeitritt -------------------------------------------------------
 
 /**
+ * Nachschlagen, welcher Verein hinter einem Einladungscode steht.
+ *
+ * Noetig, weil [JoinClubRequest] eine [playerId] aus dem Kader verlangt, der
+ * Kader aber erst mit der Beitrittsantwort kaeme. Ohne diesen Schritt muesste
+ * der Beitretende seine eigene Spieler-Id auswendig wissen.
+ *
+ * Der Einladungscode IST das Geheimnis: wer ihn hat, darf den Kader sehen, denn
+ * er darf ohnehin gleich beitreten. Ein unbekannter Code antwortet mit
+ * derselben Meldung wie ein fehlgeschlagener Beitritt, damit sich Codes nicht
+ * durchprobieren lassen.
+ */
+@Serializable
+data class ClubLookupRequest(
+    val inviteCode: String,
+)
+
+/**
+ * Der Verein samt Kader, aber ohne Token. Das Nachschlagen allein macht das
+ * Geraet noch zu keinem Mitglied.
+ */
+@Serializable
+data class ClubLookupResponse(
+    val club: Club,
+)
+
+/**
  * Einladungscode gegen ein Geraetetoken tauschen.
  *
  * [playerId] muss ein Mitglied des Kaders sein: es gibt keine Gastspieler und

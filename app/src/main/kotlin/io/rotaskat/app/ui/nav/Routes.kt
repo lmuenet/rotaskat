@@ -22,6 +22,9 @@ object Routes {
     const val ARG_SESSION_ID = "sessionId"
     const val ARG_ROUND_ID = "roundId"
 
+    /** Der Einstieg nach der Installation: mit Verein oder ohne. */
+    const val ONBOARDING = "einstieg"
+    const val LOCAL_SETUP = "einstieg/lokal"
     const val JOIN = "beitritt"
     const val HOME = "start"
     const val NEW_SESSION = "abend/neu"
@@ -58,11 +61,14 @@ class RotaskatNavActions(private val navController: NavHostController) {
         navController.popBackStack()
     }
 
-    fun toJoin() = navController.navigate(Routes.JOIN) {
-        // Ohne Vereinsbeitritt gibt es nichts, wohin zurueckgegangen werden
-        // koennte.
-        popUpTo(0) { inclusive = true }
-    }
+    /**
+     * Beitritt oder lokale Einrichtung. Beide behalten den Einstieg im Stapel:
+     * wer den Einladungscode doch nicht findet, soll zurueck und ohne Verein
+     * loslegen koennen, ohne die App neu zu installieren.
+     */
+    fun toJoin() = navController.navigate(Routes.JOIN)
+
+    fun toLocalSetup() = navController.navigate(Routes.LOCAL_SETUP)
 
     fun toHome() = navController.navigate(Routes.HOME) {
         popUpTo(0) { inclusive = true }

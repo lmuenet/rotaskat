@@ -4,12 +4,27 @@ Punkte-Tracker fuer private Skatrunden. Android-App mit eigenem Server fuer
 die All-Time-Rangliste eines "Skatvereins".
 
 > **Status: in Arbeit.** Modell, Abrechnung, Server und App stehen und sind
-> getestet. Der Server bedient neben `/health` den Vereinsbeitritt, den Sync
-> in beide Richtungen, die Rangliste und das Sessiondetail.
+> getestet. Die App laeuft von der Einrichtung bis zur Geldabrechnung durch,
+> wahlweise ganz ohne Server.
 >
 > Ungeprueft ist der Betrieb: der Server lief noch nie gegen ein echtes
-> Postgres, und der App fehlt der Beitrittsbildschirm - ohne ihn kommt sie an
-> keinen Verein und synchronisiert nie.
+> Postgres, und die Oberflaeche hat noch nie jemand auf einem Geraet bedient.
+> `assembleDebug` beweist, dass sie kompiliert, nicht dass sie am Tisch taugt.
+
+## Mit oder ohne Verein
+
+Beim ersten Start faellt die Entscheidung:
+
+**Ohne Verein** - Spieler eintragen und loslegen. Alles bleibt auf dem Geraet,
+kein Server noetig. Es fehlt nur die vereinsweite Rangliste ueber mehrere
+Geraete; gespielt, gerechnet und abgerechnet wird vollstaendig.
+
+**Mit Verein** - Serveradresse und Einladungscode eingeben, sich im Kader
+wiederfinden, fertig. Danach synchronisiert die App im Hintergrund.
+
+Der Wechsel von lokal zu Verein ist jederzeit moeglich und **nimmt die bereits
+gespielten Abende mit**. Genau dafuer ist er da: erst spielen, dann den Server
+aufsetzen.
 
 ## Was die App koennen soll
 

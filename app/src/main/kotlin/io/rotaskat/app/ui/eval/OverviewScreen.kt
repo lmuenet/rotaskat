@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -90,6 +92,20 @@ fun OverviewScreen(
                         roster = roster,
                         onClick = { actions.toSession(open.session.id) },
                     )
+                }
+            }
+
+            if (open == null) {
+                // Nur wenn nichts laeuft: es gibt hoechstens einen offenen
+                // Abend, und ein zweiter Knopf daneben wuerde das Gegenteil
+                // suggerieren.
+                item(key = "new-session") {
+                    Button(
+                        onClick = { actions.toNewSession() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = RotaskatDimens.bigTapTarget),
+                    ) { Text("Neuen Abend starten") }
                 }
             }
 

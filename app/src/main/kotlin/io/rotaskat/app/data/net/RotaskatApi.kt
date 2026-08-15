@@ -22,6 +22,8 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.rotaskat.app.BuildConfig
 import io.rotaskat.app.data.settings.AppSettings
+import io.rotaskat.shared.api.ClubLookupRequest
+import io.rotaskat.shared.api.ClubLookupResponse
 import io.rotaskat.shared.api.JoinClubRequest
 import io.rotaskat.shared.api.JoinClubResponse
 import io.rotaskat.shared.api.RotaskatJson
@@ -55,6 +57,9 @@ class ApiFailureException(
 ) : IllegalStateException("Server antwortete mit $status: $body")
 
 interface RotaskatApi {
+
+    /** Kader zu einem Einladungscode, damit der Beitretende sich aussuchen kann. */
+    suspend fun lookup(request: ClubLookupRequest): ClubLookupResponse
 
     suspend fun join(request: JoinClubRequest): JoinClubResponse
 
@@ -103,6 +108,14 @@ class KtorRotaskatApi(
     private val client: HttpClient,
     private val settings: AppSettings,
 ) : RotaskatApi {
+
+    override suspend fun lookup(request: ClubLookupRequest): ClubLookupResponse {
+        val response = client.post("${base()}/clubs/lookup") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return response.requireSuccess().body()
+    }
 
     override suspend fun join(request: JoinClubRequest): JoinClubResponse {
         val response = client.post("${base()}/clubs/join") {

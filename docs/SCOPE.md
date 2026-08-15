@@ -13,6 +13,32 @@ die App muss ohne Netz vollstaendig funktionieren.
 
 ## Getroffene Entscheidungen
 
+### Betriebsmodi
+
+Die App laeuft in zwei Modi, und **ohne Verein ist kein Notbehelf**, sondern
+ein vollwertiger Betrieb:
+
+- **Ohne Verein**: Spieler werden lokal angelegt, alles bleibt auf dem Geraet.
+  Kein Server, kein Token, kein Sync - und damit nichts, was ausfallen kann.
+  Es fehlt einzig die vereinsweite Rangliste ueber mehrere Geraete.
+- **Mit Verein**: ein Einladungscode wird gegen ein Geraetetoken getauscht,
+  danach laufen Sync und gemeinsame Rangliste.
+
+Der Weg von lokal nach Verein **nimmt die bereits gespielten Abende mit**. Das
+ist keine Kuer, sondern der erwartete Ablauf: man spielt erst ein paar Abende
+und richtet den Server spaeter ein. Ohne Uebernahme waeren genau die ersten
+Abende verloren - also die, an denen sich die App bewaehrt hat.
+
+Technisch ist die Uebernahme billig, weil eine Runde nur Sitzplatznummern
+kennt und keine Spieler: es genuegt, die Sitzordnung der Abende auf die
+Vereinsmitglieder umzuhaengen. Die Runden selbst bleiben Byte fuer Byte
+gleich. Die Zuordnung schlaegt Mitglieder mit gleichem Namen automatisch vor
+und bricht ab, bevor irgendetwas umgehaengt wird, wenn sie unvollstaendig ist -
+ein Abend mit halb lokalen, halb echten Spieler-Ids waere nicht reparierbar.
+
+Der Rueckweg von Verein nach lokal existiert bewusst nicht. Was einmal auf dem
+Server liegt, laesst sich nicht sinnvoll "entsynchronisieren".
+
 ### Erfassung
 
 Ein Geraet fuehrt Buch. Die anderen Spieler sehen waehrend des Abends nichts;

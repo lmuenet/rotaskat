@@ -2,8 +2,11 @@ package io.rotaskat.app.data
 
 import io.rotaskat.app.data.net.PushResult
 import io.rotaskat.app.data.net.RotaskatApi
+import io.rotaskat.app.data.settings.AppMode
 import io.rotaskat.app.data.settings.AppSettings
 import io.rotaskat.app.data.settings.DeviceIdentity
+import io.rotaskat.shared.api.ClubLookupRequest
+import io.rotaskat.shared.api.ClubLookupResponse
 import io.rotaskat.shared.api.JoinClubRequest
 import io.rotaskat.shared.api.JoinClubResponse
 import io.rotaskat.shared.api.SyncPullResponse
@@ -68,11 +71,26 @@ class FakeAppSettings(
             identityFlow.value = value
         }
 
+    private val modeFlow = MutableStateFlow(deviceIdentity?.let { AppMode.CLUB })
+
     override val identity: Flow<DeviceIdentity?> get() = identityFlow
+
+    override val mode: Flow<AppMode?> get() = modeFlow
 
     override suspend fun token(): String? = token
 
     override suspend fun identityOrNull(): DeviceIdentity? = identityFlow.value
+
+    override suspend fun modeOrNull(): AppMode? = modeFlow.value
+
+    override suspend fun clubId(): String? = identityFlow.value?.clubId ?: localClubId
+
+    override suspend fun setLocalMode(clubId: String) {
+        localClubId = clubId
+        modeFlow.value = AppMode.LOCAL
+    }
+
+    private var localClubId: String? = null
 
     override suspend fun serverUrl(): String = url
 
@@ -83,6 +101,7 @@ class FakeAppSettings(
     override suspend fun saveJoin(token: String, identity: DeviceIdentity) {
         this.token = token
         identityFlow.value = identity
+        modeFlow.value = AppMode.CLUB
     }
 
     override suspend fun clearToken() {
@@ -98,6 +117,9 @@ class FakeApi : RotaskatApi {
 
     var onPush: (SyncPushRequest) -> PushResult = { PushResult.Applied(SyncPushResponse(cursor = 0)) }
     var onPull: (Long) -> SyncPullResponse = { SyncPullResponse(cursor = it) }
+
+    override suspend fun lookup(request: ClubLookupRequest): ClubLookupResponse =
+        error("Im Test nicht benutzt")
 
     override suspend fun join(request: JoinClubRequest): JoinClubResponse =
         error("Im Test nicht benutzt")

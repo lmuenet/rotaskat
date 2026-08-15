@@ -21,6 +21,14 @@ interface ClubDao {
 
     @Query("SELECT * FROM club WHERE id = :id")
     suspend fun find(id: String): ClubEntity?
+
+    /**
+     * Raeumt den lokalen Verein weg, nachdem seine Abende an den echten Verein
+     * uebergeben wurden. Der Kader verschwindet per CASCADE mit; die Abende
+     * nicht, denn `session` haengt bewusst an keinem Fremdschluessel.
+     */
+    @Query("DELETE FROM club WHERE id <> :keep")
+    suspend fun deleteOthers(keep: String)
 }
 
 @Dao
@@ -86,6 +94,14 @@ interface SessionDao {
 
     @Query("SELECT * FROM session WHERE id IN (:ids)")
     suspend fun findAll(ids: List<String>): List<SessionEntity>
+
+    /**
+     * Alle Abende, auch geloeschte. Nur fuer die Uebergabe an einen Verein: die
+     * wird ein einziges Mal ausgefuehrt und darf keinen Abend uebersehen, auch
+     * keinen zurueckgenommenen.
+     */
+    @Query("SELECT * FROM session ORDER BY startedAt, id")
+    suspend fun all(): List<SessionEntity>
 
     /**
      * Nur loeschen, solange die Revision unveraendert ist. Waehrend der Sync
@@ -165,6 +181,14 @@ interface RoundDao {
 
     @Query("SELECT COUNT(*) FROM round WHERE sessionId = :sessionId AND deletedAt IS NULL")
     suspend fun countLive(sessionId: String): Int
+
+    /**
+     * Stellt alle Runden auf "wartet auf den Server". Gedacht fuer den Uebergang
+     * vom lokalen Betrieb in einen Verein: bis dahin war der Sync abgeschaltet,
+     * also hat keine Runde je einen Server gesehen.
+     */
+    @Query("UPDATE round SET pendingSync = 1")
+    suspend fun markAllPending()
 }
 
 @Dao

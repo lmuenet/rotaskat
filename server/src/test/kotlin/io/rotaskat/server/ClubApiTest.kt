@@ -10,6 +10,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
+import io.rotaskat.shared.api.ClubLookupRequest
+import io.rotaskat.shared.api.ClubLookupResponse
 import io.rotaskat.shared.api.JoinClubRequest
 import io.rotaskat.shared.api.JoinClubResponse
 import io.rotaskat.shared.api.LeaderboardResponse
@@ -21,6 +23,50 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ClubApiTest {
+
+    /**
+     * Ohne diesen Schritt gaebe es keinen Beitritt: der Beitretende muss eine
+     * Spieler-Id nennen, und die kann er nur waehlen, wenn er den Kader vorher
+     * sieht.
+     */
+    @Test
+    fun `Nachschlagen liefert den Kader ohne Token`() = testApplication {
+        val repository = testRepository()
+        application { module(repository) }
+        val client = jsonClient()
+
+        val response = client.post("/clubs/lookup") {
+            contentType(ContentType.Application.Json)
+            setBody(ClubLookupRequest(inviteCode = INVITE_CODE))
+        }
+        assertEquals(HttpStatusCode.OK, response.status)
+
+        val body: ClubLookupResponse = response.body()
+        assertEquals(CLUB_ID, body.club.id)
+        assertEquals(3, body.club.roster.size)
+        assertTrue(body.club.roster.all { it.active })
+
+        // Der Kader allein macht das Geraet zu keinem Mitglied: ohne Token
+        // bleiben die geschuetzten Endpunkte zu.
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/leaderboard").status)
+    }
+
+    @Test
+    fun `Nachschlagen mit falschem Code verraet nichts`() = testApplication {
+        val repository = testRepository()
+        application { module(repository) }
+        val client = jsonClient()
+
+        val response = client.post("/clubs/lookup") {
+            contentType(ContentType.Application.Json)
+            setBody(ClubLookupRequest(inviteCode = "ausgedacht"))
+        }
+        // Dieselbe Antwort wie ein fehlgeschlagener Beitritt. Ein eigener
+        // Fehlertext waere ein Orakel, mit dem sich Einladungscodes
+        // durchprobieren liessen.
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+        assertTrue(CLUB_ID !in response.bodyAsText())
+    }
 
     @Test
     fun `Einladungscode wird gegen ein Geraetetoken getauscht`() = testApplication {

@@ -118,18 +118,62 @@ class RoomRotaskatRepository(
 
     // --- Schreiben --------------------------------------------------------
 
-    override suspend fun saveClub(club: Club) {
+    override suspend fun adoptLocalData(club: Club, playerMapping: Map<String, String>) {
+        val targets = club.roster.mapTo(mutableSetOf()) { it.id }
+        require(playerMapping.values.all { it in targets }) {
+            "Die Zuordnung zeigt auf Spieler ausserhalb des Kaders"
+        }
+
         database.withTransaction {
-            clubDao.upsert(ClubEntity(club.id, club.name, club.scoring, club.centsPerPoint))
-            if (club.roster.isNotEmpty()) {
-                playerDao.upsertAll(
-                    club.roster.map { PlayerEntity(it.id, club.id, it.displayName, it.active) }
-                )
-                // Ein Spieler, den der Server nicht mehr fuehrt, verschwindet
-                // auch lokal. Bei leerem Kader passiert nichts - das waere sonst
-                // eine Antwort ohne Kader, die den ganzen Verein leerraeumt.
-                playerDao.deleteMissing(club.id, club.roster.map { it.id })
+            // Erst pruefen, dann umhaengen. Eine Uebergabe, die auf halber
+            // Strecke abbricht, liesse Abende mit gemischter Sitzordnung
+            // zurueck - halb lokale, halb echte Spieler-Ids.
+            val sessions = sessionDao.all()
+            val seatsBySession = sessions.associate { it.id to seatDao.bySession(it.id) }
+            val unmapped = seatsBySession.values.flatten()
+                .map { it.playerId }
+                .filter { it !in playerMapping }
+                .distinct()
+            require(unmapped.isEmpty()) {
+                "Fuer diese lokalen Spieler fehlt die Zuordnung: ${unmapped.joinToString()}"
             }
+
+            saveClubWithin(club)
+            // Der lokale Verein verschwindet samt Kader per CASCADE. Die Abende
+            // bleiben, weil `session` bewusst an keinem Fremdschluessel haengt.
+            clubDao.deleteOthers(club.id)
+
+            for (session in sessions) {
+                val seats = seatsBySession.getValue(session.id)
+                seatDao.insertAll(seats.map { it.copy(playerId = playerMapping.getValue(it.playerId)) })
+                sessionDao.upsert(session.copy(clubId = club.id, pendingSync = true))
+            }
+            // Bis hierhin war der Sync abgeschaltet, also hat keine Runde je
+            // einen Server gesehen.
+            roundDao.markAllPending()
+        }
+        syncTrigger.requestSync()
+    }
+
+    override suspend fun saveClub(club: Club) {
+        database.withTransaction { saveClubWithin(club) }
+    }
+
+    /**
+     * Der Kern von [saveClub], ohne eigene Transaktion. Die Uebergabe an einen
+     * Verein braucht ihn mitten in ihrer eigenen Transaktion - geschachtelt
+     * waere er dort ein zweiter, unabhaengiger Commit-Punkt.
+     */
+    private suspend fun saveClubWithin(club: Club) {
+        clubDao.upsert(ClubEntity(club.id, club.name, club.scoring, club.centsPerPoint))
+        if (club.roster.isNotEmpty()) {
+            playerDao.upsertAll(
+                club.roster.map { PlayerEntity(it.id, club.id, it.displayName, it.active) }
+            )
+            // Ein Spieler, den der Server nicht mehr fuehrt, verschwindet auch
+            // lokal. Bei leerem Kader passiert nichts - das waere sonst eine
+            // Antwort ohne Kader, die den ganzen Verein leerraeumt.
+            playerDao.deleteMissing(club.id, club.roster.map { it.id })
         }
     }
 

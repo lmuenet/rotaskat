@@ -126,6 +126,22 @@ interface RotaskatRepository {
     suspend fun saveClub(club: Club)
 
     /**
+     * Uebergibt die lokal gespielten Abende an einen echten Verein.
+     *
+     * Der Weg dorthin ist der Normalfall und nicht der Sonderfall: man spielt
+     * erst ein paar Abende ohne Server und richtet den Server spaeter ein. Ohne
+     * diese Uebergabe waeren genau diese ersten Abende verloren.
+     *
+     * [playerMapping] bildet die lokalen Spieler-Ids auf Mitglieder des
+     * Vereinskaders ab und muss JEDEN lokal belegten Sitzplatz abdecken.
+     * Die Runden selbst bleiben unberuehrt: sie kennen nur Sitzplatznummern,
+     * keine Spieler - deshalb genuegt es, die Sitzordnung umzuhaengen.
+     *
+     * Danach warten alle Abende und Runden auf den Sync.
+     */
+    suspend fun adoptLocalData(club: Club, playerMapping: Map<String, String>)
+
+    /**
      * Startet einen Abend und friert die Vereinsregeln dafuer ein.
      * Liefert die Id der neuen Session.
      */
