@@ -69,19 +69,29 @@ damit die Haelftung bei ungeraden Spielwerten exakt bleibt.
 ## Entwicklung
 
 Voraussetzung ist ein JDK 17 und das Android SDK, beides bringt Android Studio
-mit. Ein Gradle-Wrapper ist noch nicht eingecheckt; einmalig anlegen mit:
-
-```bash
-gradle wrapper --gradle-version 8.14
-```
-
-Danach:
+mit. Der Gradle-Wrapper ist eingecheckt.
 
 ```bash
 ./gradlew :shared:test        # Abrechnungslogik testen
 ./gradlew :app:assembleDebug  # APK bauen
 ./gradlew :server:run         # Server lokal starten (braucht Postgres)
 ```
+
+### Windows: Umlaute im Pfad
+
+Wenn der Windows-Benutzername einen Umlaut enthaelt, schlaegt `:shared:test`
+mit `ClassNotFoundException: GradleWorkerMain` fehl. Gradle legt den Classpath
+des Test-Workers als Jar unterhalb von `GRADLE_USER_HOME` ab, und der
+Standardpfad `C:\Users\<Name>\.gradle` bricht dann das Classloading.
+
+Abhilfe: das Gradle-Home auf einen reinen ASCII-Pfad legen.
+
+```powershell
+setx GRADLE_USER_HOME "C:\dev\gradle-home"
+```
+
+Aus demselben Grund sollte auch das Projekt selbst nicht unterhalb eines
+Pfades mit Umlaut liegen.
 
 ## Betrieb
 

@@ -22,21 +22,18 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # Das Repo hat bewusst keinen Gradle-Wrapper eingecheckt, solange lokal
-      # noch kein JDK installiert ist. setup-gradle stellt Gradle bereit.
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14'
 
+      # Kein --no-daemon: ohne Daemon greift der Configuration Cache nicht.
       - name: Abrechnungslogik testen
-        run: gradle --no-daemon :shared:test
+        run: ./gradlew :shared:test
 
       - name: Server bauen
-        run: gradle --no-daemon :server:build
+        run: ./gradlew :server:build
 
       - name: App bauen (Debug)
-        run: gradle --no-daemon :app:assembleDebug
+        run: ./gradlew :app:assembleDebug
 
       - name: Testberichte hochladen
         if: always()
