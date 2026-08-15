@@ -24,9 +24,20 @@ kein Merge-Punkt.
 
 ### Session und Rangliste
 
-Eine Session ist ein Spielabend mit eigenem Endstand. Ranglisten gibt es
-zweifach: **all-time** ueber alles, und **pro Saison**, damit ein frueher
-Vorsprung sie nicht auf Jahre einbetoniert.
+Eine Session ist ein Spielabend mit eigenem Endstand. Sie laeuft, bis jemand
+"Abend beenden" tippt - es gibt keine Sollrundenzahl und keinen
+Fortschrittsbalken.
+
+Ranglisten gibt es zweifach: **all-time** ueber alles, und **pro Saison**,
+damit ein frueher Vorsprung sie nicht auf Jahre einbetoniert. Eine Saison ist
+ein **Kalenderjahr**. Am 1. Januar startet die Saisontabelle neu, die
+All-Time-Rangliste laeuft unberuehrt weiter.
+
+### Rundenarten
+
+Keine Bockrunden, keine Ramschrunden. Jede Runde zaehlt gleich. Damit
+braucht die App weder einen Rundenzaehler mit Sonderstatus noch eine Anzeige
+"Bockrunde 2 von 3".
 
 ### Spieler
 

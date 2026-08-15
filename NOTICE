@@ -1,0 +1,15 @@
+Rotaskat
+Copyright 2026 lmuenet
+
+Dieses Produkt steht unter der Apache License, Version 2.0. Siehe LICENSE.
+
+--------------------------------------------------------------------------
+
+Diese Datei fuehrt uebernommenen Fremdcode und dessen Herkunft auf. Sie ist
+noch leer, weil bisher nichts uebernommen wurde. Geplant ist:
+
+JSkat (https://github.com/b0n541/jskat), Apache License 2.0
+    Vorgesehen zur Uebernahme von Testvektoren fuer die Spielwertberechnung
+    nach Skatordnung. Bei Uebernahme ist dieser Eintrag zu konkretisieren
+    (welche Dateien, welcher Commit) und der Copyright-Vermerk des Originals
+    zu erhalten.

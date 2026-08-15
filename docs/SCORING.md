@@ -158,9 +158,9 @@ frueher wurde in Schritten des Grundwerts hochgezaehlt, was bei einem sehr
 grossen Gebot ins Int-Overflow lief und die Abbruchbedingung nie erfuellte.
 Heute wird aufrundend dividiert, mit Long als Zwischenrechnung.
 
-## Noch offen
+## Was es bewusst nicht gibt
 
-- Gibt es bei euch Bockrunden oder Ramschrunden (Runden mit erhoehter
-  Wertung nach bestimmten Ereignissen)?
-- Wird der Geber mitgezaehlt, also gibt es eine feste Rundenzahl pro Abend
-  ("jeder gibt dreimal"), oder wird gespielt bis Schluss ist?
+Keine Bockrunden und keine Ramschrunden. Jede Runde zaehlt gleich, es gibt
+keine Runden mit erhoehter Wertung nach bestimmten Ereignissen.
+
+Keine feste Rundenzahl pro Abend. Gespielt wird, bis Schluss ist.

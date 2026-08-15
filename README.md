@@ -110,4 +110,7 @@ GitHub-Actions-Secrets.
 
 ## Lizenz
 
-Noch nicht festgelegt.
+[Apache License 2.0](LICENSE). Bewusst gewaehlt, weil JSkat und
+now-in-android ebenfalls unter Apache-2.0 stehen und wir deren Testvektoren
+bzw. Muster mit Attribution uebernehmen koennen. Uebernommener Fremdcode wird
+in [NOTICE](NOTICE) gefuehrt.
