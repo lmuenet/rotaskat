@@ -130,6 +130,36 @@ Spielarten und Augenzahlen, als `RoundScore.sum()` im Code, und als
 `DEFERRABLE` Constraint-Trigger auf `round_score` in der Datenbank. Sie ist
 das wirksamste Netz gegen stille Rechenfehler in der All-Time-Rangliste.
 
+## Geldabrechnung
+
+Am Abendende werden die halben Punkte aller Spieler mit dem Cent-pro-Punkt-Satz
+des Vereins in Cent umgerechnet. Die Implementierung liegt in
+`shared/src/main/kotlin/io/rotaskat/shared/settlement/Settlement.kt`.
+
+Gerechnet wird in ganzen Cent und in `Long`, nie in `Double`. Ein halber Punkt
+ist bei ungeradem Satz ein halber Cent, deshalb laeuft die Zwischenrechnung in
+**halben Cent** und wird erst am Ende abgerundet; die dabei entstehenden
+Restcent werden in stabiler Sitzreihenfolge wieder verteilt. Wuerde stattdessen
+jeder Spieler einzeln gerundet, ginge die Summe um ein paar Cent daneben und
+die Zahlungen wuerden nicht mehr aufgehen.
+
+Ausgeglichen wird mit **minimaler Anzahl Zahlungen**: der groesste Glaeubiger
+bekommt vom groessten Schuldner, bis einer von beiden auf null ist. Jeder
+Schritt streicht mindestens einen Spieler, es bleiben also hoechstens n-1
+Zahlungen. Zwei Zusicherungen gelten immer: die Summe aller Salden ist 0, und
+jeder Spieler landet durch die Zahlungen exakt auf seinem Saldo.
+
+Ist die Summe der halben Punkte nicht 0, wird die Abrechnung abgelehnt statt
+schief gerechnet - dann ist eine Runde kaputt.
+
+## Vierertisch und Geber
+
+`Round.dealerSeat` haelt fest, wer gegeben hat. Am Vierertisch ist das
+derselbe Sitzplatz wie `sittingOutSeat`, und `validate()` besteht darauf:
+sonst rotiert die App an einer anderen Stellung weiter, als abgerechnet
+wurde. Die Rotation selbst steht in `TableRotation` und wandert einen Platz
+weiter; ein Tap am Tisch setzt den Geber direkt.
+
 ## Warum Rohdaten gespeichert werden
 
 In der Datenbank steht nicht `punkte = -54`, sondern die Spielfakten:
@@ -151,7 +181,16 @@ Damit still falsche Ergebnisse nicht in der Historie landen, prueft
 | `bid` | 18 bis 264 | 18 ist das niedrigste Gebot, 264 der hoechste Spielwert (Grand ouvert mit 4) |
 | `cardPoints` | 0 bis 120 | Augen einer Partei |
 | `pushes` | 0 bis 5 | Ueberlaufschutz, siehe oben |
-| `matadors` | mindestens 1 | "mit 1" bzw. "ohne 1" ist das Minimum |
+| `matadors` (Farbe) | 1 bis 11 | vier Buben plus sieben Trumpfkarten der Farbe |
+| `matadors` (Grand) | 1 bis 4 | beim Grand sind nur die vier Buben Spitzen |
+
+Die Obergrenze fuer `matadors` ist der zweite Ueberlaufschutz neben `pushes`:
+ohne sie multipliziert `gameValue()` Grundwert mal Spielstufe in `Int`, und ein
+gereichtes `matadors` in Millionenhoehe kippt den Spielwert ins Negative -
+nullsummig und damit fuer jede Invariante unsichtbar. Sie ist zugleich eine
+Regelaussage: einen Grand mit 7 gibt es nicht. Jede Multiplikation der
+Abrechnung laeuft deshalb zusaetzlich als Referenzrechnung durch `Long` und
+wird gegen den `Int`-Bereich geprueft, statt still zu wrappen.
 
 Ohne die `bid`-Grenze konnte `overbidValue()` in eine Endlosschleife laufen:
 frueher wurde in Schritten des Grundwerts hochgezaehlt, was bei einem sehr

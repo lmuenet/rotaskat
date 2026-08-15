@@ -18,6 +18,13 @@ androidxNavigation = "2.8.9"
 room = "2.7.0"
 ksp = "2.1.20-1.0.31"
 datastore = "1.1.4"
+# 2.10.x ist die zu compileSdk 35 passende Reihe; 2.11 gehoert zur SDK-36-Welle.
+androidxWork = "2.10.5"
+kotest = "5.9.1"
+junit4 = "4.13.2"
+# 4.14.x ist die Reihe, die SDK 35 kennt - die App wird gegen compileSdk 35 gebaut.
+robolectric = "4.14.1"
+androidxTest = "1.6.1"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
@@ -63,6 +70,20 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidxWork" }
+
+# Nur die Property-Engine, nicht das Kotest-Testframework: gelaufen wird
+# weiterhin mit kotlin.test auf JUnit 5.
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+# Room braucht eine echte SQLite-Implementierung. Robolectric liefert sie im
+# reinen Unit-Test-Lauf, damit die Datenschicht ohne Emulator geprueft werden
+# kann - die CI hat keinen.
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-core = { module = "androidx.test:core-ktx", version.ref = "androidxTest" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -127,6 +127,16 @@ ist ein Konflikt und wird gemeldet, nicht still ueberschrieben.
 **Delta-Pull ueber einen serverseitigen Sequenzzaehler**, nicht ueber
 Zeitstempel. Handyuhren laufen auseinander.
 
+Der Zaehler loest damit das Uhrenproblem, nicht das Sichtbarkeitsproblem:
+`nextval` vergibt die Nummer bei der Ausfuehrung, sichtbar wird die Zeile erst
+beim Commit. Zwei Dinge halten den Cursor deshalb ehrlich. Erstens laufen
+schreibende Batches eines Vereins ueber eine `pg_advisory_xact_lock`
+nacheinander - Nummer und Commit haben damit dieselbe Ordnung. Zweitens liest
+der Pull Runden, Sessions und Cursor in EINER Transaktion, und der Cursor kommt
+aus den ausgelieferten Zeilen. Ein Cursor, der weiter ist als die Auslieferung,
+macht Daten unrettbar; doppelt gelieferte Zeilen kosten dagegen nichts, der
+Upsert ist idempotent.
+
 **Halbe Punkte durchgehend ganzzahlig**, in Postgres `BIGINT`, nie `numeric`
 oder `float`.
 
@@ -161,10 +171,13 @@ Ramsch-Abrechnung ist zwangslaeufig Hausregel und gehoert genau deshalb in
 
 ## Teststrategie
 
-Der Raum aller legalen Ansagen ist winzig, einige tausend Faelle. Er wird
-**erschoepfend durchgezaehlt** statt zufaellig bestichprobt. Dazu eine
-handgeprueft eingecheckte Referenztabelle der Skatordnung als CSV, die nie
-automatisch regeneriert wird.
+Der Raum aller legalen Ansagen ist winzig, 484 Faelle. Er wird
+**erschoepfend durchgezaehlt** statt zufaellig bestichprobt. Die
+handgeprueft eingecheckte Referenztabelle der Skatordnung liegt als TSV in
+`shared/src/test/resources/scoring/spielwerte.tsv`. Sie wird nie automatisch
+regeneriert: das geht nur von Hand ueber `:shared:generateGameValueTable`,
+sonst wuerde eine versehentliche Regelaenderung ihren eigenen Beweis
+mitliefern.
 
 Property-Tests nur dort, wo der Raum gross ist: Rundenlisten, Sitzordnungen,
 Serialisierungs-Roundtrip.

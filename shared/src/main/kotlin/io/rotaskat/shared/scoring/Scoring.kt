@@ -48,11 +48,28 @@ data class RoundScore(
 
 object Scoring {
 
+    /**
+     * Stand des Abrechnungsalgorithmus. Wird pro Session mitgeschrieben, damit
+     * eine Abweichung zwischen APK und Server als Versionsdrift erkennbar ist
+     * und nicht als unerklaerlicher Rechenfehler. Hochzaehlen, sobald sich das
+     * Ergebnis von [score] fuer gleiche Rohdaten aendert.
+     */
+    const val SCORING_VERSION = 1
+
     /** Grundwert des Grand nach Skatordnung. */
     const val GRAND_BASE = 24
 
     /** Hoechstmoegliche Augenzahl einer Partei. */
     const val MAX_CARD_POINTS = 120
+
+    /**
+     * Hoechste Spitzenzahl eines Farbspiels: vier Buben plus die sieben
+     * Trumpfkarten der Farbe.
+     */
+    const val MAX_SUIT_MATADORS = 11
+
+    /** Beim Grand sind ausschliesslich die vier Buben Spitzen. */
+    const val MAX_GRAND_MATADORS = 4
 
     /** Niedrigstes moegliches Reizgebot. */
     const val MIN_BID = 18
@@ -71,6 +88,20 @@ object Scoring {
     const val MAX_PUSHES = 5
 
     /**
+     * Die zulaessigen Spitzenzahlen einer Ansage. `null` heisst: diese Spielart
+     * kennt keine Spitzen.
+     *
+     * Die Grenze steht hier und nicht nur in der Oberflaeche: eine Zusage, die
+     * ausschliesslich in einer Kachelreihe lebt, gilt fuer alles nicht, was
+     * ueber den Sync hereinkommt.
+     */
+    fun matadorRange(declaration: Declaration): IntRange? = when (declaration) {
+        is SuitGame -> 1..MAX_SUIT_MATADORS
+        is GrandGame -> 1..MAX_GRAND_MATADORS
+        is NullGame, is RamschGame -> null
+    }
+
+    /**
      * Spielstufe: Spitzen + 1 fuer das Spiel selbst + je 1 pro Zusatzstufe.
      */
     fun gameLevel(matadors: Int, modifiers: Modifiers): Int =
@@ -86,8 +117,18 @@ object Scoring {
 
     /** Regulaerer Spielwert, also der Reizwert des tatsaechlich gespielten Spiels. */
     fun gameValue(declaration: Declaration): Int = when (declaration) {
-        is SuitGame -> declaration.suit.baseValue * gameLevel(declaration.matadors, declaration.modifiers)
-        is GrandGame -> GRAND_BASE * gameLevel(declaration.matadors, declaration.modifiers)
+        is SuitGame -> product(
+            declaration.suit.baseValue,
+            gameLevel(declaration.matadors, declaration.modifiers),
+            "Spielwert von $declaration",
+        )
+
+        is GrandGame -> product(
+            GRAND_BASE,
+            gameLevel(declaration.matadors, declaration.modifiers),
+            "Spielwert von $declaration",
+        )
+
         is NullGame -> declaration.variant.gameValue
         is RamschGame -> 0
     }
@@ -108,6 +149,24 @@ object Scoring {
             ceilToMultiple(target, base)
         }
     }
+
+    /**
+     * Jede Multiplikation der Abrechnung laeuft ueber diese beiden Helfer.
+     *
+     * Die Nullsummen-Invariante ist overflow-blind: `2V - V - V` ergibt auch
+     * dann exakt 0, wenn V modulo 2^32 gekippt ist. Ein Ueberlauf bliebe also
+     * unentdeckt, bis er in der All-Time-Rangliste steht. Deshalb wird in Long
+     * gerechnet und der Bereich geprueft, statt still zu wrappen.
+     */
+    private fun product(left: Int, right: Int, what: String): Int =
+        checked(left.toLong() * right.toLong(), what)
+
+    private fun checked(value: Long, what: String): Int {
+        require(value in INT_RANGE) { "$what laeuft ueber: $value passt nicht in einen Int" }
+        return value.toInt()
+    }
+
+    private val INT_RANGE = Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()
 
     /** Kleinstes Vielfaches von [multiple], das [value] erreicht. */
     private fun ceilToMultiple(value: Int, multiple: Int): Int {
@@ -146,18 +205,19 @@ object Scoring {
             if (durchmarsch != null) {
                 // Durchmarsch gewinnt wie ein Grand, also nach normaler Verteilung.
                 val value = config.durchmarschValue
-                halfPoints[durchmarsch] = 2 * value
+                halfPoints[durchmarsch] = product(2, value, "Durchmarsch der Runde ${round.id}")
                 active.filter { it != durchmarsch }.forEach { halfPoints[it] = -value }
                 return RoundScore(halfPoints, value)
             }
 
-            var cardPoints = ramsch.cardPoints
+            var cardPoints = ramsch.cardPoints.toLong()
             if (config.jungfrauDoubles && ramsch.jungfrau) cardPoints *= 2
-            if (config.pushDoubles && ramsch.pushes > 0) cardPoints *= (1 shl ramsch.pushes)
+            if (config.pushDoubles && ramsch.pushes > 0) cardPoints *= (1L shl ramsch.pushes)
+            val augen = checked(cardPoints, "Augenwert der Runde ${round.id}")
 
-            halfPoints[ramsch.loserSeat] = -2 * cardPoints
-            active.filter { it != ramsch.loserSeat }.forEach { halfPoints[it] = cardPoints }
-            return RoundScore(halfPoints, cardPoints)
+            halfPoints[ramsch.loserSeat] = checked(-2L * cardPoints, "Ramsch der Runde ${round.id}")
+            active.filter { it != ramsch.loserSeat }.forEach { halfPoints[it] = augen }
+            return RoundScore(halfPoints, augen)
         }
 
         val declarer = round.declarerSeat!!
@@ -166,17 +226,17 @@ object Scoring {
         } else {
             gameValue(round.declaration)
         }
-        val value = rawValue * round.contra.multiplier
+        val value = product(rawValue, round.contra.multiplier, "Spielwert der Runde ${round.id}")
 
         // Ueberreizt gilt immer als verloren, unabhaengig vom Stichergebnis.
         val lost = round.overbid || !round.won
         val opponents = active.filter { it != declarer }
 
         if (lost) {
-            halfPoints[declarer] = -4 * value
-            opponents.forEach { halfPoints[it] = 2 * value }
+            halfPoints[declarer] = product(-4, value, "Verlust der Runde ${round.id}")
+            opponents.forEach { halfPoints[it] = product(2, value, "Gewinn der Runde ${round.id}") }
         } else {
-            halfPoints[declarer] = 2 * value
+            halfPoints[declarer] = product(2, value, "Gewinn der Runde ${round.id}")
             opponents.forEach { halfPoints[it] = -value }
         }
         return RoundScore(halfPoints, value)
@@ -194,12 +254,20 @@ object Scoring {
         }
         val range = 0 until round.seatCount
 
+        if (round.dealerSeat !in range) {
+            errors += "dealerSeat ${round.dealerSeat} liegt ausserhalb des Tisches"
+        }
+
         if (round.seatCount == 4) {
             val out = round.sittingOutSeat
             if (out == null) {
                 errors += "sittingOutSeat ist am Vierertisch Pflicht"
             } else if (out !in range) {
                 errors += "sittingOutSeat $out liegt ausserhalb des Tisches"
+            } else if (out != round.dealerSeat) {
+                // Sonst rotiert die App an einer anderen Stellung weiter, als
+                // die Runde abgerechnet wurde.
+                errors += "Am Vierertisch muss der Geber aussetzen: dealerSeat=${round.dealerSeat}, sittingOutSeat=$out"
             }
         } else if (round.sittingOutSeat != null) {
             errors += "sittingOutSeat darf am Dreiertisch nicht gesetzt sein"
@@ -245,8 +313,12 @@ object Scoring {
                 is GrandGame -> d.matadors
                 else -> null
             }
-            if (matadors != null && matadors < 1) {
-                errors += "Spitzenzahl muss mindestens 1 sein, ist $matadors"
+            val allowed = matadorRange(round.declaration)
+            if (matadors != null && allowed != null && matadors !in allowed) {
+                // Die Obergrenze ist keine Schikane: ein Grand mit 7 gibt es
+                // nicht, waere aber nullsummig und damit fuer jede Invariante
+                // unsichtbar - und beim Farbspiel liegt dahinter der Ueberlauf.
+                errors += "Spitzenzahl muss zwischen ${allowed.first} und ${allowed.last} liegen, ist $matadors"
             }
             if (round.overbid && round.bid == null) {
                 errors += "Ueberreizt ohne Reizwert laesst sich nicht abrechnen"
