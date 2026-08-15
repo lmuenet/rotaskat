@@ -55,6 +55,21 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+
+    testOptions {
+        unitTests {
+            // Robolectric braucht die gemergten Ressourcen und das Manifest,
+            // sonst startet kein Anwendungskontext.
+            isIncludeAndroidResources = true
+        }
+    }
+}
+
+// Room schreibt das Schema jeder Version als JSON mit. Ohne diese Dateien gibt
+// es spaeter keinen Migrationstest, sondern nur die Hoffnung, dass die
+// handgeschriebene Migration zum erwarteten Schema fuehrt.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -66,6 +81,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
+    // Sync laeuft als WorkManager-Job: in der Kneipe gibt es haeufig kein Netz,
+    // der Upload muss den Prozesstod ueberleben und spaeter nachziehen.
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
@@ -85,4 +103,12 @@ dependencies {
     implementation(libs.ktor.serialization.json)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.junit4)
+    // Kein Emulator, keine androidTest-Instrumentierung: die Datenschicht wird
+    // mit Robolectric im normalen Unit-Test-Lauf geprueft. Der schnelle
+    // CI-Job kommt damit ohne Android-Geraet aus.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
 }
