@@ -36,6 +36,9 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.ktor.server.test.host)
+    // Der Testclient soll dieselbe Json-Konfiguration fahren wie die App,
+    // sonst testet er ein Drahtformat, das es so gar nicht gibt.
+    testImplementation(libs.ktor.client.content.negotiation)
 }
 
 tasks.test {
