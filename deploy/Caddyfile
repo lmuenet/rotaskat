@@ -1,0 +1,24 @@
+# Caddy holt und erneuert das TLS-Zertifikat selbst. Die Domain kommt aus
+# der Umgebung, steht also nicht im Repo.
+{
+	email {$ACME_EMAIL}
+}
+
+{$ROTASKAT_DOMAIN} {
+	encode gzip
+
+	# Sicherheits-Header. HSTS erst einschalten, wenn die Domain sicher
+	# dauerhaft auf HTTPS bleibt.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	reverse_proxy server:8080 {
+		health_uri /health
+		health_interval 30s
+	}
+}

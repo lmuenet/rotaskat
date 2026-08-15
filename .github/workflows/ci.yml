@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 17 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Das Repo hat bewusst keinen Gradle-Wrapper eingecheckt, solange lokal
+      # noch kein JDK installiert ist. setup-gradle stellt Gradle bereit.
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14'
+
+      - name: Abrechnungslogik testen
+        run: gradle --no-daemon :shared:test
+
+      - name: Server bauen
+        run: gradle --no-daemon :server:build
+
+      - name: App bauen (Debug)
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Testberichte hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/**'
+          if-no-files-found: ignore
+          retention-days: 7

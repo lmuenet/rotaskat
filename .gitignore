@@ -1,0 +1,38 @@
+# --- Secrets: nichts davon gehoert in ein oeffentliches Repo ---
+.env
+*.env
+!.env.example
+local.properties
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+
+# --- Gradle / Build ---
+.gradle/
+build/
+captures/
+out/
+
+# --- Android ---
+*.apk
+*.aab
+*.ap_
+*.dex
+.cxx/
+release/
+
+# --- IDE ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log

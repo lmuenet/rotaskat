@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Bewusst ein Plattform-Theme als Parent: das Farbschema und die Typografie
+      kommen vollstaendig aus Compose Material 3, das XML-Theme setzt nur den
+      Fensterrahmen. So bleibt die App frei von der Material-Components-Library.
+    -->
+    <style name="Theme.Rotaskat" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
