@@ -13,6 +13,8 @@ google-services.json
 build/
 captures/
 out/
+# Ablage des Kotlin-Compilers je Build, kein Quelltext.
+.kotlin/
 
 # --- Android ---
 *.apk

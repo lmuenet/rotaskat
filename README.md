@@ -3,9 +3,13 @@
 Punkte-Tracker fuer private Skatrunden. Android-App mit eigenem Server fuer
 die All-Time-Rangliste eines "Skatvereins".
 
-> **Status: fruehe Phase.** Domaenenmodell und Abrechnungslogik stehen und
-> sind getestet. Die App ist bisher ein Platzhalter, der Server kennt nur
-> `/health`. Der Funktionsumfang wird gerade festgelegt.
+> **Status: in Arbeit.** Modell, Abrechnung, Server und App stehen und sind
+> getestet. Der Server bedient neben `/health` den Vereinsbeitritt, den Sync
+> in beide Richtungen, die Rangliste und das Sessiondetail.
+>
+> Ungeprueft ist der Betrieb: der Server lief noch nie gegen ein echtes
+> Postgres, und der App fehlt der Beitrittsbildschirm - ohne ihn kommt sie an
+> keinen Verein und synchronisiert nie.
 
 ## Was die App koennen soll
 
@@ -39,7 +43,8 @@ rotaskat/
 ├── server/    Ktor-Server, Postgres-Schema, Flyway-Migrationen.
 ├── app/       Android-App.
 ├── deploy/    Caddy-Konfiguration.
-└── docs/      SCORING.md - die verbindlichen Hausregeln.
+└── docs/      SCOPE.md - die getroffenen Entscheidungen,
+                SCORING.md - die verbindlichen Hausregeln.
 ```
 
 Der entscheidende Punkt ist `shared`: Modell und Abrechnung existieren genau

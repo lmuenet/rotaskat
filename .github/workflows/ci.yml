@@ -35,6 +35,13 @@ jobs:
       - name: App bauen (Debug)
         run: ./gradlew :app:assembleDebug
 
+      # Muss laufen, sonst sind die exportierten Room-Schemata unter
+      # app/schemas/ unbewacht und jede kuenftige Migration ungeprueft. Der
+      # Schritt steht hinter assembleDebug, weil Robolectric beim ersten Lauf
+      # die android-all-Jars nachlaedt und die Android-Toolchain braucht.
+      - name: App testen (Unit)
+        run: ./gradlew :app:testDebugUnitTest
+
       - name: Testberichte hochladen
         if: always()
         uses: actions/upload-artifact@v4
