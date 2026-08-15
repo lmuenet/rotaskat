@@ -1,0 +1,9 @@
+# Im Repo immer LF. Sonst landen CRLF-Zeilenenden in Dateien, die in
+# Linux-Containern ausgefuehrt werden (Caddyfile, Dockerfile, Shellskripte).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jar binary
+*.keystore binary
+*.jks binary
