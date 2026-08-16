@@ -7,7 +7,7 @@ plugins {
 // und der Ktor-Server laufen beide auf der JVM, damit reicht ein simples
 // Modul. Das haelt den Build klein und die Toolchain unkompliziert.
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 dependencies {

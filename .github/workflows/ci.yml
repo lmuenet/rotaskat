@@ -16,11 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: JDK 17 einrichten
+      - name: JDK 21 einrichten
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
