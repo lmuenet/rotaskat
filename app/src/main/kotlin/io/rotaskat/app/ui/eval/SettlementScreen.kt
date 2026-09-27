@@ -1,20 +1,27 @@
 package io.rotaskat.app.ui.eval
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,8 +32,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.rotaskat.app.R
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.StandingRow
@@ -40,6 +49,7 @@ import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.seatNames
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
+import io.rotaskat.app.ui.theme.accentColors
 import io.rotaskat.app.ui.theme.scoreColors
 import io.rotaskat.shared.model.SessionStatus
 import io.rotaskat.shared.settlement.Payment
@@ -80,10 +90,12 @@ fun SettlementScreen(
         modifier = modifier,
         actions = {
             if (current != null) {
-                TextButton(onClick = {
-                    shareText(context, settlementShareText(current, seatNames(current.session, roster)))
-                }) { Text("Teilen") }
-                TextButton(onClick = { actions.toHistory(sessionId) }) { Text("Verlauf") }
+                SettlementActions(
+                    onShare = {
+                        shareText(context, settlementShareText(current, seatNames(current.session, roster)))
+                    },
+                    onHistory = { actions.toHistory(sessionId) },
+                )
             }
         },
     ) {
@@ -103,7 +115,7 @@ fun SettlementScreen(
                 // Frueher blieb er dauerhaft als "0 Runden" in der Uebersicht.
                 SessionActionSection(
                     label = "Abend verwerfen",
-                    hint = "Dieser Abend hat keine einzige Runde und verschwindet damit aus der Übersicht.",
+                    hint = "Ohne Runde – verschwindet aus der Übersicht.",
                     onAction = {
                         graph.repository.discardSession(sessionId)
                         actions.toHome()
@@ -112,7 +124,7 @@ fun SettlementScreen(
             } else {
                 SessionActionSection(
                     label = "Abend wieder öffnen",
-                    hint = "Zum Korrigieren einer Runde. Danach läuft der Abend weiter, bis er erneut beendet wird.",
+                    hint = "Zum Korrigieren einer Runde.",
                     onAction = {
                         graph.repository.reopenSession(sessionId)
                         actions.toSessionAfterReopen(sessionId)
@@ -120,6 +132,23 @@ fun SettlementScreen(
                 )
             }
         }
+    }
+}
+
+/**
+ * Die Kopfzeile-Aktionen der Abrechnung: teilen und zum Punkteverlauf.
+ *
+ * Icons statt Textknoepfe, weil die Kopfzeile fuer beide Aktionen zusammen
+ * kaum breiter ist als ein einzelnes Wort - "Teilen" und "Verlauf" nebeneinander
+ * gequetscht waren am Telefon schon eng.
+ */
+@Composable
+internal fun RowScope.SettlementActions(onShare: () -> Unit, onHistory: () -> Unit) {
+    IconButton(onClick = onShare) {
+        Icon(Icons.Filled.Share, contentDescription = "Teilen")
+    }
+    IconButton(onClick = onHistory) {
+        Icon(painterResource(R.drawable.ic_show_chart), contentDescription = "Punkteverlauf")
     }
 }
 
@@ -142,7 +171,9 @@ private fun SessionActionSection(label: String, hint: String, onAction: suspend 
                     error = runCatching { onAction() }.exceptionOrNull()?.message
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+            modifier = Modifier.fillMaxWidth().heightIn(min = RotaskatDimens.tapTarget),
         ) { Text(label) }
         Text(
             text = error ?: hint,
@@ -161,28 +192,29 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
     val settlement = remember(state) { runCatching { state.settlement() }.getOrNull() }
 
     if (state.session.status == SessionStatus.OPEN) {
-        Notice(
-            "Dieser Abend läuft noch. Die Abrechnung ist ein Zwischenstand und " +
-                "ändert sich mit jeder weiteren Runde.",
+        Text(
+            text = "Zwischenstand – der Abend läuft noch.",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.accentColors.labelMuted,
         )
     }
 
     if (settlement == null) {
-        Notice(
-            "Die Abrechnung geht nicht auf: die Punkte dieses Abends summieren sich " +
-                "nicht auf null. Solange das so ist, wird bewusst nichts ausgerechnet - " +
-                "eine Runde muss korrigiert werden.",
-        )
+        Notice("Die Punkte gehen nicht auf null auf. Bitte eine Runde korrigieren.")
         Endstand(state, names)
         return
     }
 
     EvalSection(
         title = "Zahlungen",
-        subtitle = "So wenige Zahlungen wie möglich - nicht jeder mit jedem.",
+        info = "So wenige Zahlungen wie möglich – nicht jeder mit jedem.",
     ) {
         if (settlement.payments.isEmpty()) {
-            Notice("Alles ausgeglichen. Heute zahlt niemand.")
+            Text(
+                text = "Alles ausgeglichen.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
                 for (payment in settlement.payments) {
@@ -194,8 +226,8 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 
     EvalSection(
         title = "Salden",
-        subtitle = "${state.session.centsPerPoint} Cent je Punkt, am Anpfiff dieses Abends " +
-            "festgehalten. Plus heißt bekommt, Minus heißt zahlt.",
+        info = "${state.session.centsPerPoint} Cent je Punkt, festgehalten beim Anpfiff. " +
+            "Plus bekommt, Minus zahlt.",
     ) {
         BalanceTable(settlement = settlement, names = names, state = state)
     }
@@ -233,8 +265,9 @@ private fun Endstand(state: SessionState, names: Map<Int, String>) {
 @Composable
 private fun PaymentCard(payment: Payment<Int>, names: Map<Int, String>) {
     Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(RotaskatDimens.cardCorner),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -279,8 +312,9 @@ private fun BalanceTable(
 ) {
     val colors = MaterialTheme.scoreColors
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(RotaskatDimens.cardCorner),
         color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
@@ -300,7 +334,7 @@ private fun BalanceTable(
                         Column(Modifier.weight(1f)) {
                             Text(
                                 text = names[balance.player] ?: "Platz ${balance.player + 1}",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = RotaskatTextStyles.compact,
                                 maxLines = 1,
                             )
                             Text(
