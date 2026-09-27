@@ -46,6 +46,15 @@ object Routes {
     const val LEADERBOARD = "rangliste"
     const val STATS = "statistik"
     const val SETTINGS = "einstellungen"
+
+    /**
+     * Die Ziele der unteren Leiste. Nur auf ihnen steht die Leiste - im Abend
+     * braucht die Eingabe den ganzen Platz, und in Unterseiten fuehrt der
+     * Zurueck-Pfeil.
+     */
+    val TOP_LEVEL: List<String> = listOf(HOME, LEADERBOARD, STATS)
+
+    fun isTopLevel(route: String?): Boolean = route in TOP_LEVEL
 }
 
 /**
@@ -108,9 +117,20 @@ class RotaskatNavActions(private val navController: NavHostController) {
 
     fun toHistory(sessionId: String) = navController.navigate(Routes.history(sessionId))
 
-    fun toLeaderboard() = navController.navigate(Routes.LEADERBOARD)
+    /**
+     * Wechsel zwischen den Zielen der unteren Leiste. Der Stapel waechst dabei
+     * nicht: zurueck fuehrt von jedem Ziel in die Uebersicht der Abende, und
+     * Scrollstand und Zeitraum eines Ziels bleiben beim Wiederkommen erhalten.
+     */
+    fun toTopLevel(route: String) = navController.navigate(route) {
+        popUpTo(Routes.HOME) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
 
-    fun toStats() = navController.navigate(Routes.STATS)
+    fun toLeaderboard() = toTopLevel(Routes.LEADERBOARD)
+
+    fun toStats() = toTopLevel(Routes.STATS)
 
     fun toSettings() = navController.navigate(Routes.SETTINGS)
 

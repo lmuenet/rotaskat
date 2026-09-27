@@ -16,13 +16,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
+import io.rotaskat.app.ui.common.RotaskatTopBar
 import io.rotaskat.app.ui.common.formatDate
 import io.rotaskat.app.ui.common.formatPoints
 import io.rotaskat.app.ui.nav.RotaskatNavActions
@@ -52,7 +50,6 @@ import io.rotaskat.shared.model.SessionStatus
  * ueber sein Datum, und ein Datum liest man in einer Liste schneller als in
  * einer Kartenfolge.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
     actions: RotaskatNavActions,
@@ -69,13 +66,9 @@ fun OverviewScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("Rotaskat") },
+            RotaskatTopBar(
+                title = "Rotaskat",
                 actions = {
-                    TextButton(onClick = { actions.toLeaderboard() }) { Text("Rangliste") }
-                    TextButton(onClick = { actions.toStats() }) { Text("Statistik") }
-                    // Kader, Cent-Satz und Vereinsbeitritt. Als Symbol, weil ein
-                    // dritter Textknopf neben den Titel nicht mehr passt.
                     IconButton(onClick = { actions.toSettings() }) {
                         Icon(Icons.Filled.Settings, contentDescription = "Einstellungen")
                     }

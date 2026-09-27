@@ -37,7 +37,7 @@ fun LeaderboardScreen(
     EvalScaffold(
         title = "Rangliste",
         subtitle = period.label,
-        onBack = { actions.back() },
+        onBack = null,
         modifier = modifier,
     ) {
         PeriodSelector(seasons = seasons, selected = period, onSelect = viewModel::setPeriod)

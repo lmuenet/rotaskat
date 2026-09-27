@@ -51,7 +51,7 @@ fun StatsScreen(
     EvalScaffold(
         title = "Statistik",
         subtitle = period.label,
-        onBack = { actions.back() },
+        onBack = null,
         modifier = modifier,
     ) {
         PeriodSelector(seasons = seasons, selected = period, onSelect = viewModel::setPeriod)

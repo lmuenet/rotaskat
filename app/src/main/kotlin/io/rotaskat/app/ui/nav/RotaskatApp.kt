@@ -1,14 +1,22 @@
 package io.rotaskat.app.ui.nav
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.rotaskat.app.data.RotaskatGraph
@@ -78,94 +86,84 @@ private fun RotaskatNavHost(loaded: LoadedMode, modifier: Modifier) {
         if (loaded.mode == null) Routes.ONBOARDING else Routes.HOME
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    Scaffold(
         modifier = modifier,
-    ) {
-        composable(Routes.ONBOARDING) {
-            OnboardingScreen(
-                onLocal = { actions.toLocalSetup() },
-                onJoin = { actions.toJoin() },
-            )
-        }
-
-        composable(Routes.LOCAL_SETUP) {
-            LocalSetupScreen(
-                onDone = { actions.toHome() },
-                onBack = { actions.back() },
-            )
-        }
-
-        composable(Routes.JOIN) {
-            JoinScreen(
-                onDone = { actions.toHome() },
-                onBack = { actions.back() },
-            )
-        }
-
-        composable(Routes.NEW_SESSION) {
-            NewSessionScreen(
-                onStarted = { sessionId -> actions.toSession(sessionId, replace = true) },
-                onBack = { actions.back() },
-            )
-        }
-        composable(Routes.HOME) {
-            OverviewScreen(actions = actions)
-        }
-
-        composable(
-            route = Routes.SESSION_PATTERN,
-            arguments = listOf(navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType }),
-        ) { entry ->
-            val sessionId = entry.sessionId() ?: return@composable
-            SessionScreen(sessionId = sessionId, actions = actions)
-        }
-
-        composable(
-            route = Routes.ROUND_EDIT_PATTERN,
-            arguments = listOf(
-                navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType },
-                navArgument(Routes.ARG_ROUND_ID) { type = NavType.StringType },
-            ),
-        ) { entry ->
-            val sessionId = entry.sessionId() ?: return@composable
-            val roundId = entry.arguments?.getString(Routes.ARG_ROUND_ID) ?: return@composable
-            SessionScreen(
-                sessionId = sessionId,
-                actions = actions,
-                editRoundId = roundId,
-            )
-        }
-
-        composable(
-            route = Routes.SETTLEMENT_PATTERN,
-            arguments = listOf(navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType }),
-        ) { entry ->
-            val sessionId = entry.sessionId() ?: return@composable
-            SettlementScreen(sessionId = sessionId, actions = actions)
-        }
-
-        composable(
-            route = Routes.HISTORY_PATTERN,
-            arguments = listOf(navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType }),
-        ) { entry ->
-            val sessionId = entry.sessionId() ?: return@composable
-            ProgressScreen(sessionId = sessionId, actions = actions)
-        }
-
-        composable(Routes.LEADERBOARD) {
-            LeaderboardScreen(actions = actions)
-        }
-
-        composable(Routes.STATS) {
-            StatsScreen(actions = actions)
-        }
-
-        composable(Routes.SETTINGS) {
-            SettingsScreen(actions = actions)
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = {
+            if (Routes.isTopLevel(currentRoute)) {
+                RotaskatBottomBar(currentRoute = currentRoute, onSelect = actions::toTopLevel)
+            }
+        },
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            enterTransition = {
+                RotaskatTransitions.enter(initialState.destination.route, targetState.destination.route)
+            },
+            exitTransition = { RotaskatTransitions.exit() },
+            popEnterTransition = {
+                RotaskatTransitions.popEnter(initialState.destination.route, targetState.destination.route)
+            },
+            popExitTransition = { RotaskatTransitions.exit() },
+        ) {
+            guarded(Routes.ONBOARDING) {
+                OnboardingScreen(
+                    onLocal = { actions.toLocalSetup() },
+                    onJoin = { actions.toJoin() },
+                )
+            }
+            guarded(Routes.LOCAL_SETUP) {
+                LocalSetupScreen(onDone = { actions.toHome() }, onBack = { actions.back() })
+            }
+            guarded(Routes.JOIN) {
+                JoinScreen(onDone = { actions.toHome() }, onBack = { actions.back() })
+            }
+            guarded(Routes.NEW_SESSION) {
+                NewSessionScreen(
+                    onStarted = { sessionId -> actions.toSession(sessionId, replace = true) },
+                    onBack = { actions.back() },
+                )
+            }
+            guarded(Routes.HOME) { OverviewScreen(actions = actions) }
+            guarded(Routes.SESSION_PATTERN, listOf(sessionArg)) { entry ->
+                val sessionId = entry.sessionId() ?: return@guarded
+                SessionScreen(sessionId = sessionId, actions = actions)
+            }
+            guarded(Routes.ROUND_EDIT_PATTERN, listOf(sessionArg, roundArg)) { entry ->
+                val sessionId = entry.sessionId() ?: return@guarded
+                val roundId = entry.arguments?.getString(Routes.ARG_ROUND_ID) ?: return@guarded
+                SessionScreen(sessionId = sessionId, actions = actions, editRoundId = roundId)
+            }
+            guarded(Routes.SETTLEMENT_PATTERN, listOf(sessionArg)) { entry ->
+                val sessionId = entry.sessionId() ?: return@guarded
+                SettlementScreen(sessionId = sessionId, actions = actions)
+            }
+            guarded(Routes.HISTORY_PATTERN, listOf(sessionArg)) { entry ->
+                val sessionId = entry.sessionId() ?: return@guarded
+                ProgressScreen(sessionId = sessionId, actions = actions)
+            }
+            guarded(Routes.LEADERBOARD) { LeaderboardScreen(actions = actions) }
+            guarded(Routes.STATS) { StatsScreen(actions = actions) }
+            guarded(Routes.SETTINGS) { SettingsScreen(actions = actions) }
         }
     }
+}
+
+private val sessionArg = navArgument(Routes.ARG_SESSION_ID) { type = NavType.StringType }
+private val roundArg = navArgument(Routes.ARG_ROUND_ID) { type = NavType.StringType }
+
+/** Ein Ziel, dessen Bildschirm waehrend des Verlassens keine Taps mehr annimmt. */
+private fun NavGraphBuilder.guarded(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) = composable(route = route, arguments = arguments) { entry ->
+    LeavingGuard { content(entry) }
 }
 
 /**
@@ -175,5 +173,5 @@ private fun RotaskatNavHost(loaded: LoadedMode, modifier: Modifier) {
  * von aussen geschickten Link passieren - dann ist ein leerer Bildschirm die
  * richtige Antwort.
  */
-private fun androidx.navigation.NavBackStackEntry.sessionId(): String? =
+private fun NavBackStackEntry.sessionId(): String? =
     arguments?.getString(Routes.ARG_SESSION_ID)
