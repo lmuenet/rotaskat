@@ -168,6 +168,8 @@ fun RoundEntryPanel(
                 draft = draft,
                 seatNames = seatNames,
                 onChange = { change -> pick { it.copy(ramsch = change(it.ramsch)) } },
+                // Ohne Haptik: jeder Tastendruck waere sonst ein Klick.
+                onPoints = { seat, value -> onDraftChange { it.withRamschPoints(seat, value) } },
             )
         } else if (draft.game != null) {
             ExtrasSection(
@@ -524,7 +526,7 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
  */
 @Composable
 private fun GameValueDisplay(draft: RoundDraft) {
-    val value = draft.gameValue
+    val value = draft.displayedGameValue
     Surface(
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,

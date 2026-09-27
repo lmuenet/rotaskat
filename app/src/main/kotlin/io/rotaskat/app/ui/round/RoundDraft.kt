@@ -115,6 +115,12 @@ data class RamschDraft(
     val jungfrau: Boolean = false,
     val durchmarschSeat: Int? = null,
     val pushes: Int = 0,
+    /**
+     * Das Feld, das die App als 120 minus die beiden anderen ergaenzt hat.
+     * Es wird nachgefuehrt, solange niemand es selbst anfasst - beim Tippen von
+     * "60" kommt erst die "6" an, und eine einmal gesetzte 54 waere danach falsch.
+     */
+    val autoSeat: Int? = null,
 ) {
     fun pointsOf(seat: Int): Int = cardPoints[seat]?.toIntOrNull() ?: 0
 
@@ -415,7 +421,51 @@ data class RoundDraft(
      * statt korrigieren.
      */
     private val ramschReady: Boolean
-        get() = ramsch.durchmarschSeat != null || editing || ramsch.complete(activeSeats)
+        get() = when {
+            ramsch.durchmarschSeat != null -> true
+            // Sind alle drei Zahlen da, muessen sie auch stimmen: 120 Augen
+            // liegen im Spiel, alles andere ist ein Tippfehler. Frueher war die
+            // Summenprobe nur rot eingefaerbt und der Knopf trotzdem aktiv.
+            ramsch.complete(activeSeats) -> ramsch.total(activeSeats) == Scoring.MAX_CARD_POINTS
+            else -> editing
+        }
+
+    /**
+     * Der Spielwert, wie er ueber den Ergebnisknoepfen steht. Beim Ramsch erst,
+     * wenn die Runde steht - nach der ersten Zahl ist zwar rechnerisch schon ein
+     * "Verlierer" da, aber noch niemand weiss, wer es wirklich ist.
+     */
+    val displayedGameValue: Int?
+        get() = if (isRamsch && !ramschReady) null else gameValue
+
+    /**
+     * Traegt Augen ein und ergaenzt das letzte leere Feld auf 120.
+     *
+     * Das spart beim Ramsch eine Eingabe, und die Summenprobe kann nur noch dann
+     * anschlagen, wenn jemand alle drei Zahlen selbst eintippt.
+     */
+    fun withRamschPoints(seat: Int, value: String): RoundDraft {
+        var next = ramsch.withPoints(seat, value)
+        if (seat == next.autoSeat) next = next.copy(autoSeat = null)
+
+        val auto = next.autoSeat
+        val candidate = auto ?: activeSeats.filterNot { next.entered(it) }.singleOrNull()
+        if (candidate != null) {
+            val others = activeSeats.filter { it != candidate }
+            val rest = Scoring.MAX_CARD_POINTS - others.sumOf { next.pointsOf(it) }
+            next = if (others.all { next.entered(it) } && rest >= 0) {
+                next.copy(
+                    cardPoints = next.cardPoints + (candidate to rest.toString()),
+                    autoSeat = candidate,
+                )
+            } else if (auto != null) {
+                next.copy(cardPoints = next.cardPoints - auto, autoSeat = null)
+            } else {
+                next
+            }
+        }
+        return copy(ramsch = next)
+    }
 
     /** Von wem die Augen noch fehlen. Traegt den Hinweis unter der Eingabe. */
     val missingRamschSeats: List<Int> get() = activeSeats.filterNot { ramsch.entered(it) }
@@ -469,7 +519,8 @@ data class RoundDraft(
     private fun ramschDerivation(): String {
         val durchmarsch = ramsch.durchmarschSeat
         if (durchmarsch != null) return "Durchmarsch = ${config.durchmarschValue}"
-        val loser = ramsch.loser(activeSeats) ?: return "Augen fehlen noch"
+        if (!editing && !ramsch.complete(activeSeats)) return "Augen fehlen noch"
+        val loser = ramsch.loser(activeSeats) ?: return "Gleichstand – Verlierer wählen"
         val base = ramsch.pointsOf(loser)
         val parts = buildList {
             add("$base Augen")

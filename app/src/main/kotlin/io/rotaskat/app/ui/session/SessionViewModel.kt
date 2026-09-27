@@ -184,7 +184,11 @@ class SessionViewModel(
                     SessionMessage.Saved("Runde geändert", UndoToken.Restore(previous), closesEdit = true)
                 } else {
                     SessionMessage.Saved(
-                        if (won) "Gewonnen gespeichert" else "Verloren gespeichert",
+                        when {
+                            round.ramsch != null -> "Ramsch gespeichert"
+                            won -> "Gewonnen gespeichert"
+                            else -> "Verloren gespeichert"
+                        },
                         UndoToken.Remove(round.id),
                     )
                 }

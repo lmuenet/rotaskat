@@ -3,7 +3,7 @@ titel: Ramsch - Speichern trotz falscher Augensumme, falsche Bestätigung, Tasta
 typ: bug
 schwere: mittel
 bereich: Rundeneingabe, RamschPanel, SessionViewModel
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -33,3 +33,14 @@ gefunden: 2026-09-27
   `Modifier.imePadding()` bzw. `bringIntoView` für das fokussierte Feld.
 - Snackbar-Text für Ramsch: „Ramsch gespeichert – <Verlierer> −60“.
 - Den Wert erst anzeigen, wenn alle Augen eingetragen sind.
+
+## Umsetzung
+
+- Speichern nur bei Summe 120 (oder Durchmarsch bzw. Korrektur mit nur den
+  gespeicherten Verlierer-Augen).
+- Das letzte leere Feld wird als 120 − a − b ergänzt und beim Weitertippen
+  nachgeführt, bis jemand es selbst ändert („ergibt sich aus 120 Augen“).
+- `ImeAction.Next`/`Done`, `imePadding()` auf dem Abend-Bildschirm.
+- Wert und Herleitung erst, wenn alle Augen stehen.
+- Meldung „Ramsch gespeichert“; die ausführliche Zeile mit Verlierer und
+  Punkten kommt mit #009.

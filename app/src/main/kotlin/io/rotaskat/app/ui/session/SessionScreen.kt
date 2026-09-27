@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.ScrollState
@@ -197,7 +199,13 @@ fun SessionScreen(
             onEditRound = { roundId -> actions.toRoundEdit(sessionId, roundId) },
             onCancelEdit = { viewModel.cancelEdit(); actions.back() },
             onDelete = { editRoundId?.let(viewModel::deleteRound) },
-            modifier = Modifier.padding(padding),
+            // Die Tastatur der Ramsch-Augen schiebt die Ergebnisleiste mit nach
+            // oben, statt das zweite und dritte Feld zu verdecken. Das Fenster
+            // selbst wird bei targetSdk 35 nicht mehr verkleinert.
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding(),
         )
     }
 

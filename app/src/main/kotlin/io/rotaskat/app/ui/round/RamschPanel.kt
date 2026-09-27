@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.common.OptionGrid
@@ -38,6 +39,7 @@ fun RamschPanel(
     draft: RoundDraft,
     seatNames: Map<Int, String>,
     onChange: ((RamschDraft) -> RamschDraft) -> Unit,
+    onPoints: (seat: Int, value: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val ramsch = draft.ramsch
@@ -49,7 +51,9 @@ fun RamschPanel(
 
         if (durchmarsch == null) {
             SectionLabel("Augen")
-            for (seat in active) {
+            for ((position, seat) in active.withIndex()) {
+                val last = position == active.lastIndex
+                val computed = ramsch.autoSeat == seat
                 OutlinedTextField(
                     value = ramsch.cardPoints[seat].orEmpty(),
                     onValueChange = { input ->
@@ -58,11 +62,21 @@ fun RamschPanel(
                             ?.coerceAtMost(Scoring.MAX_CARD_POINTS)
                             ?.toString()
                             ?: ""
-                        onChange { it.withPoints(seat, capped) }
+                        onPoints(seat, capped)
                     },
                     label = { Text(seatNames[seat] ?: "Platz ${seat + 1}") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    // "Weiter" springt ins naechste Feld, "Fertig" schliesst die
+                    // Tastatur. Vorher war die Aktionstaste ein Haken ohne Wirkung.
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = if (last) ImeAction.Done else ImeAction.Next,
+                    ),
+                    supportingText = if (computed) {
+                        { Text("ergibt sich aus 120 Augen") }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
