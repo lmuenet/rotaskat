@@ -25,6 +25,15 @@ val Suit.label: String
         Suit.CLUBS -> "Kreuz"
     }
 
+/** Das Farbsymbol, wie es auf der Karte steht. */
+val Suit.symbol: String
+    get() = when (this) {
+        Suit.DIAMONDS -> "♦"
+        Suit.HEARTS -> "♥"
+        Suit.SPADES -> "♠"
+        Suit.CLUBS -> "♣"
+    }
+
 val NullVariant.label: String
     get() = when (this) {
         NullVariant.NULL -> "Null"

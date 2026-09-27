@@ -36,4 +36,16 @@ object RotaskatDimens {
 
     /** Ein Sitzplatz im Ring. */
     val seatSlotSize = 104.dp
+
+    /** Ecken der Auswahlkacheln. */
+    val tileCorner = 12.dp
+
+    /** Ecken von "Gewonnen" und "Verloren". */
+    val commitCorner = 16.dp
+
+    /** Ecken von Karten, etwa des laufenden Abends auf der Startseite. */
+    val cardCorner = 16.dp
+
+    /** Rand einer gewaehlten Kachel. */
+    val selectedBorder = 2.dp
 }

@@ -1,5 +1,6 @@
 package io.rotaskat.app.ui.common
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,13 +8,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,10 +28,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.rotaskat.app.ui.theme.RotaskatDimens
+import io.rotaskat.app.ui.theme.RotaskatTextStyles
+import io.rotaskat.app.ui.theme.accentColors
+import io.rotaskat.shared.model.Suit
 
 /**
  * Die eine Auswahlflaeche, aus der fast die gesamte Eingabe besteht.
@@ -50,49 +63,138 @@ fun OptionTile(
     height: Dp = RotaskatDimens.bigTapTarget,
     selectedColor: Color? = null,
 ) {
+    TileFrame(
+        selected = selected,
+        enabled = enabled,
+        onClick = onClick,
+        height = height,
+        selectedColor = selectedColor,
+        modifier = modifier,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+            )
+            if (secondaryLabel != null) {
+                Text(
+                    text = secondaryLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Karo, Herz, Pik oder Kreuz: das Symbol gross, darunter klein der Name.
+ *
+ * Das Symbol erkennt man schneller als das Wort, gerade bei schlechtem Licht.
+ * Der Name bleibt fuer Neulinge und fuer TalkBack stehen; vorgelesen wird nur
+ * er, nicht das Zeichen "♣".
+ */
+@Composable
+fun SuitTile(
+    suit: Suit,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = MaterialTheme.accentColors
+    val symbolColor = when (suit) {
+        Suit.DIAMONDS, Suit.HEARTS -> accent.suitRed
+        Suit.SPADES, Suit.CLUBS -> accent.suitBlack
+    }
+    TileFrame(selected = selected, enabled = true, onClick = onClick, modifier = modifier) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = suit.symbol,
+                color = symbolColor,
+                fontSize = 26.sp,
+                lineHeight = 28.sp,
+                modifier = Modifier.clearAndSetSemantics { },
+            )
+            Text(
+                text = suit.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else accent.labelMuted,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/**
+ * Flaeche, Rand und Auswahlzustand aller Kacheln.
+ *
+ * Die Auswahl hat drei Kanaele: Goldschimmer, Goldrand und Haekchen. Im
+ * Kneipenlicht ist ein Farbunterschied allein zu wenig, um eine getroffene
+ * Auswahl im Vorbeisehen zu erkennen.
+ *
+ * `selectable` statt `Surface(onClick)`, damit TalkBack "ausgewaehlt" und die
+ * Rolle vorliest - im Geraetetest meldeten die Kacheln beides nicht.
+ */
+@Composable
+private fun TileFrame(
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    height: Dp = RotaskatDimens.bigTapTarget,
+    selectedColor: Color? = null,
+    content: @Composable () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(RotaskatDimens.tileCorner)
     val fill = when {
         !enabled -> colors.surfaceContainerLowest
         selected -> selectedColor ?: colors.primaryContainer
-        else -> colors.surfaceContainerHigh
+        else -> colors.surfaceContainer
     }
-    val content = when {
+    val contentColor = when {
         !enabled -> colors.onSurfaceVariant.copy(alpha = 0.38f)
         selected -> selectedColor?.let { colors.surface } ?: colors.onPrimaryContainer
         else -> colors.onSurface
     }
+    val border = when {
+        selected -> BorderStroke(RotaskatDimens.selectedBorder, colors.primary)
+        !enabled -> BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.5f))
+        else -> BorderStroke(1.dp, colors.outlineVariant)
+    }
     Surface(
-        onClick = onClick,
-        enabled = enabled,
         modifier = modifier.height(height),
-        shape = RoundedCornerShape(14.dp),
+        shape = shape,
         color = fill,
-        contentColor = content,
-        // Der Rahmen ist der zweite Kanal neben der Fuellfarbe. Im Kneipenlicht
-        // ist ein Farbunterschied allein zu wenig, um eine getroffene Auswahl
-        // im Vorbeisehen zu erkennen.
-        border = if (selected) {
-            androidx.compose.foundation.BorderStroke(2.dp, colors.primary)
-        } else {
-            null
-        },
+        contentColor = contentColor,
+        border = border,
     ) {
-        Box(Modifier.padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleSmall,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .selectable(
+                    selected = selected,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    onClick = onClick,
                 )
-                if (secondaryLabel != null) {
-                    Text(
-                        text = secondaryLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                }
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 4.dp)
+                        .size(14.dp),
+                )
             }
         }
     }
@@ -165,13 +267,13 @@ fun <T> ScaleSelector(
     }
 }
 
-/** Ueberschrift eines Abschnitts. Klein, aber nie unter 14sp. */
+/** Ueberschrift eines Abschnitts. Klein, gesperrt, gedaempft - aber nie unter 14sp. */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = RotaskatTextStyles.sectionLabel,
+        color = MaterialTheme.accentColors.labelMuted,
         modifier = modifier.padding(bottom = 6.dp),
     )
 }

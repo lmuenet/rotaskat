@@ -36,6 +36,7 @@ import io.rotaskat.app.ui.common.OptionGrid
 import io.rotaskat.app.ui.common.OptionTile
 import io.rotaskat.app.ui.common.ScaleSelector
 import io.rotaskat.app.ui.common.SectionLabel
+import io.rotaskat.app.ui.common.SuitTile
 import io.rotaskat.app.ui.common.formatPoints
 import io.rotaskat.app.ui.common.label
 import io.rotaskat.app.ui.theme.RotaskatDimens
@@ -357,27 +358,34 @@ private fun MatadorPicker(
 
 @Composable
 private fun GamePicker(draft: RoundDraft, onPick: ((RoundDraft) -> RoundDraft) -> Unit) {
-    val picks = buildList<Pair<GamePick, String>> {
-        Suit.entries.forEach { add(GamePick.Colour(it) to it.label) }
-        add(GamePick.Grand to "Grand")
-        add(GamePick.Null to "Null")
-        add(GamePick.Ramsch to "Ramsch")
-    }
-    // Vier Spalten: die vier Farben in der ersten Reihe, Grand, Null und Ramsch
-    // in der zweiten. Drei Spalten brauchten eine dritte Reihe.
-    OptionGrid(columns = 4, itemCount = picks.size) { index ->
-        val (pick, label) = picks[index]
-        OptionTile(
-            label = label,
-            selected = draft.game == pick,
-            // Der Wechsel raeumt auf, was zur neuen Ansage nicht passt - der
-            // Ramsch den Alleinspieler, das Nullspiel das "ueberreizt", der
-            // Grand eine zu hohe Spitzenzahl. Die Regeln stehen in
-            // RoundDraft.withGame und damit dort, wo sie ohne Bildschirm
-            // nachrechenbar sind.
-            onClick = { onPick { current -> current.withGame(pick) } },
-            modifier = Modifier.weight(1f),
-        )
+    val others = listOf(GamePick.Grand to "Grand", GamePick.Null to "Null", GamePick.Ramsch to "Ramsch")
+    // Vier Spalten: die vier Farben als Symbolkacheln in der ersten Reihe,
+    // Grand, Null und Ramsch in der zweiten. Drei Spalten brauchten eine
+    // dritte Reihe.
+    OptionGrid(columns = 4, itemCount = Suit.entries.size + others.size) { index ->
+        // Der Wechsel raeumt auf, was zur neuen Ansage nicht passt - der
+        // Ramsch den Alleinspieler, das Nullspiel das "ueberreizt", der
+        // Grand eine zu hohe Spitzenzahl. Die Regeln stehen in
+        // RoundDraft.withGame und damit dort, wo sie ohne Bildschirm
+        // nachrechenbar sind.
+        if (index < Suit.entries.size) {
+            val suit = Suit.entries[index]
+            val pick = GamePick.Colour(suit)
+            SuitTile(
+                suit = suit,
+                selected = draft.game == pick,
+                onClick = { onPick { current -> current.withGame(pick) } },
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            val (pick, label) = others[index - Suit.entries.size]
+            OptionTile(
+                label = label,
+                selected = draft.game == pick,
+                onClick = { onPick { current -> current.withGame(pick) } },
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
