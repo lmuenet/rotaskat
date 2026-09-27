@@ -13,7 +13,7 @@ sind. Nach Nutzen sortiert.
 1. **„Wie letztes Mal“ beim neuen Abend.** Die Runde sitzt meist gleich. Heute
    kostet die Sitzordnung 5–6 Taps plus Scrollen. Ein Button „Sitzordnung vom
    04.09. übernehmen“ macht daraus einen Tap.
-2. **Abrechnung teilen.** Ein Share-Intent mit einem Text wie „Skat 04.09.:
+2. **Abrechnung teilen.** *(umgesetzt: „Teilen“ in der Kopfzeile der Abrechnung, Text aus `settlementShareText`)* Ein Share-Intent mit einem Text wie „Skat 04.09.:
    Alex zahlt 0,50 € an Johannes, …“. Die Abrechnung wird ohnehin
    weitergeschickt.
 3. **Zahlungen abhaken.** Pro Zahlung ein Haken „erledigt“, damit beim

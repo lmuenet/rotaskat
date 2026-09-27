@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.SessionState
@@ -69,6 +70,7 @@ fun SettlementScreen(
     )
     val state by viewModel.state.collectAsState()
     val roster by viewModel.roster.collectAsState()
+    val context = LocalContext.current
 
     val current = state
     EvalScaffold(
@@ -78,6 +80,9 @@ fun SettlementScreen(
         modifier = modifier,
         actions = {
             if (current != null) {
+                TextButton(onClick = {
+                    shareText(context, settlementShareText(current, seatNames(current.session, roster)))
+                }) { Text("Teilen") }
                 TextButton(onClick = { actions.toHistory(sessionId) }) { Text("Verlauf") }
             }
         },
