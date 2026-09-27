@@ -115,3 +115,47 @@ Für das Redesign aufgefallen:
 - **Korrekturmodus:** Der Stand oben zeigt die aktuelle Rotation („Lars ·
   gibt“), die Runde hatte einen anderen Geber.
 - **TalkBack:** Kacheln melden weiterhin kein `selected` (siehe oben).
+
+## Stand nach Design-Runde Teil 1 (27.09.2026, Branch `design/kartentisch`)
+
+Umgesetzt nach `docs/superpowers/specs/2026-09-27-design-kartentisch-design.md`
+und auf dem Pixel 10 Pro geprüft (Screenshots lokal unter
+`.superpowers/device-test/`).
+
+Erledigt aus den Notizen oben:
+
+- Eigene Handschrift „Kartentisch“: warmes Anthrazit, Gold, Barlow Semi
+  Condensed für Namen/Zahlen/Titel.
+- Farbsymbole als Vektor-Icons (Kupfer ♦♥, Elfenbein ♠♣) – als Textzeichen
+  rendert Android sie als rote/graue Emoji.
+- Auswahlzustand: Goldrand, Goldschimmer, Häkchen; Kacheln melden
+  `selected`/Rolle an TalkBack (am Gerät als `checked` sichtbar).
+- Ergebnisbuttons als satte Flächen, vorher als gestrichelter Umriss mit
+  „+ ?“ sichtbar.
+- Snackbar dunkel und oben über der Eingabe statt über den Buttons.
+- Kopfzeilen mit Zurück-Pfeil und Icons; „Abend beenden …“ im Menü, abgesetzt.
+- Untere Leiste Abende/Rangliste/Statistik; Übergänge 150/100 ms; Taps auf
+  den verlassenen Bildschirm werden verschluckt (am Gerät geprüft).
+- Stand: Namen ungekürzt, Geber in Gold mit Kartensymbol, Tap öffnet „Wer
+  gibt?“ mit Sitzring; im Korrekturmodus der Geber der Runde.
+- Herleitung kurz („Kreuz mit 2 · Ouvert = 12 × 9“), vollständig sichtbar.
+- Undo-Zeile mit fester Höhe, „Gespeichert: Johannes · Kreuz mit 2“ passt.
+- Startseite: laufender Abend als Karte mit Namen neben der Führungszahl,
+  frühere Abende mit Sieger bzw. „Gleichstand“; „Neuer Abend“ nur ohne
+  laufenden Abend (Anlegen/`startSession` verhindern keinen zweiten).
+
+Offen für Teil 2 (Auswertung) und später:
+
+- Diagramm, Rangliste, Statistik, Abrechnung (Textbuttons „Teilen“/„Verlauf“)
+  und die erklärenden Absätze.
+- Die untere Leiste springt beim Wechsel Abend ↔ Startseite ohne Animation
+  ein/aus (am Gerät sichtbar, kosmetisch).
+- Während der Abend lädt, zeigt die Kopfzeile kurz „Abend“ mit €-Symbol.
+- Rand nicht gewählter Kacheln hat 1,5:1 Kontrast; die Kachel ist über ihre
+  Beschriftung erkennbar, die Spec-Formulierung „3:1 für Ränder“ klären.
+- Kleinigkeiten aus dem Gesamt-Review: toter Code (`toLeaderboard`,
+  `toStats`, `selectedColor`, `sittingOut`), doppelte Routenliste,
+  `selectableGroup` für Kachelreihen, „mehr“-Kachel als Radio statt Aufklapper,
+  Sync-Hinweis einzeilig.
+- Nicht geprüft: TalkBack-Sprachausgabe gehört (nur Semantik-Baum), Querformat,
+  Tablet, große Schrift.

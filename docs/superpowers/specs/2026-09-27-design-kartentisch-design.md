@@ -274,7 +274,7 @@ Abschnittslabel.
 
 ## 5. Startseite (`eval/OverviewScreen.kt`)
 
-- Kopfzeile: "Rotaskat" in Barlow Bold 24sp, rechts Icon `settings`. Die
+- Kopfzeile: "Rotaskat" in Barlow SemiBold 22sp (`titleLarge`, wie alle Titel), rechts Icon `settings`. Die
   Textbuttons "Rangliste" / "Statistik" entfallen (untere Leiste).
 - Laufender Abend (falls vorhanden) als Karte `surfaceContainer`, Ecken 16 dp:
   - Kopf: "♣ Abend laeuft" als Abschnittslabel in `primary`, rechts "Runde 9 · seit 19:40" in
