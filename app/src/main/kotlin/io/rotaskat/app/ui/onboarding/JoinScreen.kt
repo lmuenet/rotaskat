@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -21,8 +20,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.ui.LocalRotaskatGraph
+import io.rotaskat.app.ui.common.RotaskatTopBar
 import io.rotaskat.app.ui.common.SectionLabel
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.shared.model.Player
@@ -49,7 +47,6 @@ import io.rotaskat.shared.model.Player
  * kennt. Der dritte Schritt erscheint nur, wenn vorher ohne Verein gespielt
  * wurde, und entscheidet ueber die bereits gespielten Abende.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinScreen(
     onDone: () -> Unit,
@@ -79,15 +76,9 @@ fun JoinScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("Verein beitreten") },
-                navigationIcon = {
-                    TextButton(
-                        onClick = {
-                            if (state is JoinUiState.ChoosePlayer) viewModel.backToEntry() else onBack()
-                        }
-                    ) { Text("Zurück") }
-                },
+            RotaskatTopBar(
+                title = "Verein beitreten",
+                onBack = { if (state is JoinUiState.ChoosePlayer) viewModel.backToEntry() else onBack() },
             )
         },
     ) { padding ->

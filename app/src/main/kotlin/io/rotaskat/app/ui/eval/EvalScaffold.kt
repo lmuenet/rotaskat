@@ -10,18 +10,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.common.OptionGrid
 import io.rotaskat.app.ui.common.OptionTile
+import io.rotaskat.app.ui.common.RotaskatTopBar
 import io.rotaskat.app.ui.theme.RotaskatDimens
 
 /**
@@ -31,7 +29,6 @@ import io.rotaskat.app.ui.theme.RotaskatDimens
  * zeigen, die niemand am Tisch eintippt. Anders als die Rundeneingabe haben sie
  * kein Tap-Budget - hier wird gelesen, nicht bedient.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvalScaffold(
     title: String,
@@ -44,26 +41,7 @@ fun EvalScaffold(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(title)
-                        if (subtitle != null) {
-                            Text(
-                                text = subtitle,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
-                        TextButton(onClick = onBack) { Text("Zurück") }
-                    }
-                },
-                actions = actions,
-            )
+            RotaskatTopBar(title = title, subtitle = subtitle, onBack = onBack, actions = actions)
         },
     ) { padding ->
         Column(

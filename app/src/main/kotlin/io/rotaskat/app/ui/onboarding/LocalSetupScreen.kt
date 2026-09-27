@@ -10,13 +10,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.ui.LocalRotaskatGraph
+import io.rotaskat.app.ui.common.RotaskatTopBar
 import io.rotaskat.app.ui.common.SectionLabel
 import io.rotaskat.app.ui.common.formatAmount
 import io.rotaskat.app.ui.theme.RotaskatDimens
@@ -46,7 +45,6 @@ private const val MAX_PLAYERS = 12
  * viel. Alles andere - Hausregeln, Saison, Rangliste - hat brauchbare
  * Vorgaben und wuerde hier nur zwischen dem Nutzer und der ersten Runde stehen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalSetupScreen(
     onDone: () -> Unit,
@@ -71,12 +69,7 @@ fun LocalSetupScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text("Ohne Verein") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Zurück") } },
-            )
-        },
+        topBar = { RotaskatTopBar(title = "Ohne Verein", onBack = onBack) },
     ) { padding ->
         Column(
             modifier = Modifier

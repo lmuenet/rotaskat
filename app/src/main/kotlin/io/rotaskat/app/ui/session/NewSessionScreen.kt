@@ -13,13 +13,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.LocalRotaskatGraph
+import io.rotaskat.app.ui.common.RotaskatTopBar
 import io.rotaskat.app.ui.common.ScaleSelector
 import io.rotaskat.app.ui.common.SeatRing
 import io.rotaskat.app.ui.common.SectionLabel
@@ -52,7 +50,6 @@ import kotlinx.coroutines.launch
  * Der Geber wird hier einmal festgelegt und danach nie wieder gefragt - die App
  * schreibt ihn nach jeder Runde selbst fort.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSessionScreen(
     onStarted: (String) -> Unit,
@@ -78,12 +75,7 @@ fun NewSessionScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text("Neuer Abend") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Zurück") } },
-            )
-        },
+        topBar = { RotaskatTopBar(title = "Neuer Abend", onBack = onBack) },
     ) { padding ->
         Column(
             modifier = Modifier
