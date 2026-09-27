@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.common.ChipRow
@@ -139,13 +141,19 @@ fun StatTile(
     valueColor: Color = Color.Unspecified,
     @DrawableRes icon: Int? = null,
     iconTint: Color = Color.Unspecified,
+    /** Vorlesetext des Labels, wenn die sichtbare Kurzform (etwa "Ø je Runde") allein nicht reicht. */
+    labelDescription: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
         shape = RoundedCornerShape(RotaskatDimens.cardCorner),
         color = colors.surfaceContainer,
         border = BorderStroke(1.dp, colors.outlineVariant),
-        modifier = modifier.defaultMinSize(minHeight = 112.dp),
+        // Eine Kachel ist eine Aussage, keine Liste - TalkBack soll sie als
+        // einen Fokusstopp vorlesen statt Label, Wert und Detail getrennt.
+        modifier = modifier
+            .defaultMinSize(minHeight = 112.dp)
+            .semantics(mergeDescendants = true) {},
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -157,6 +165,11 @@ fun StatTile(
                 color = MaterialTheme.accentColors.labelMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = if (labelDescription != null) {
+                    Modifier.semantics { contentDescription = labelDescription }
+                } else {
+                    Modifier
+                },
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (icon != null) {
@@ -168,6 +181,13 @@ fun StatTile(
                     color = if (valueColor == Color.Unspecified) colors.onSurface else valueColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    // Ein Gedankenstrich ist fuer sehende Augen "keine Quote" -
+                    // vorgelesen waere er sonst ein Minuszeichen ohne Zahl.
+                    modifier = if (value == "–") {
+                        Modifier.semantics { contentDescription = "keine Angabe" }
+                    } else {
+                        Modifier
+                    },
                 )
             }
             if (detail != null) {

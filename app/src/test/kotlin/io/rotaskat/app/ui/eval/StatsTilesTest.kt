@@ -1,5 +1,7 @@
 package io.rotaskat.app.ui.eval
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -7,6 +9,7 @@ import io.rotaskat.app.R
 import io.rotaskat.app.data.TEST_CLUB
 import io.rotaskat.app.ui.common.formatPercent
 import io.rotaskat.app.ui.theme.RotaskatTheme
+import io.rotaskat.app.ui.theme.scoreColors
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -94,6 +97,24 @@ class StatsTilesTest {
         val tile = tiles.first { it.label == "Lieblingsspiel" }
         assertEquals("–", tile.value)
         assertNull(tile.icon)
+    }
+
+    @Test
+    fun `Ø je Runde mit positivem Schnitt bekommt die Gewinnfarbe`() {
+        val stats = PlayerStats(
+            player = TEST_CLUB.roster[0], halfPoints = 72, sessions = 1, rounds = 5,
+            soloRounds = 0, soloWins = 0, declarations = emptyMap(), results = emptyList(),
+        )
+        var tiles: List<StatTileModel> = emptyList()
+        var expectedGain = Color.Unspecified
+        compose.setContent {
+            RotaskatTheme {
+                expectedGain = MaterialTheme.scoreColors.gain
+                tiles = statTiles(stats)
+            }
+        }
+        val tile = tiles.first { it.label == "Ø je Runde" }
+        assertEquals(expectedGain, tile.valueColor)
     }
 
     @Test

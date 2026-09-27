@@ -97,6 +97,7 @@ internal data class StatTileModel(
     val valueColor: Color = Color.Unspecified,
     @DrawableRes val icon: Int? = null,
     val iconTint: Color = Color.Unspecified,
+    val labelDescription: String? = null,
 )
 
 /** Die sechs Kennzahlen eines Spielers, in fester Reihenfolge. */
@@ -134,6 +135,8 @@ internal fun statTiles(stats: PlayerStats): List<StatTileModel> {
             label = "Ø je Runde",
             value = if (average == null) "–" else formatAverage(average),
             detail = if (average == null) null else "aus ${counted(stats.rounds, "Runde", "Runden")}",
+            valueColor = average?.let { score.forValue(kotlin.math.sign(it).toLong()) } ?: Color.Unspecified,
+            labelDescription = "Durchschnitt je Runde",
         ),
         StatTileModel(
             label = "Lieblingsspiel",
@@ -180,6 +183,7 @@ internal fun StatTileGrid(tiles: List<StatTileModel>, modifier: Modifier = Modif
                         valueColor = tile.valueColor,
                         icon = tile.icon,
                         iconTint = tile.iconTint,
+                        labelDescription = tile.labelDescription,
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                     )
                 }
