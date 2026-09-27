@@ -129,6 +129,13 @@ interface SessionSeatDao {
 
     @Query("SELECT * FROM session_seat WHERE sessionId IN (:sessionIds) ORDER BY sessionId, seat")
     suspend fun bySessions(sessionIds: List<String>): List<SessionSeatEntity>
+
+    /** Wer an mindestens einem nicht verworfenen Abend sass. */
+    @Query(
+        "SELECT DISTINCT ss.playerId FROM session_seat ss " +
+            "JOIN session s ON s.id = ss.sessionId WHERE s.deletedAt IS NULL"
+    )
+    fun observeSeatedPlayerIds(): Flow<List<String>>
 }
 
 @Dao

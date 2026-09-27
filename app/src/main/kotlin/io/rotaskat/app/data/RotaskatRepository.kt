@@ -96,6 +96,12 @@ interface RotaskatRepository {
 
     fun observeRoster(): Flow<List<Player>>
 
+    /**
+     * Die Spieler, die an mindestens einem Abend sassen. Sie lassen sich nicht
+     * mehr aus dem Kader entfernen, nur noch umbenennen.
+     */
+    fun observeSeatedPlayerIds(): Flow<Set<String>>
+
     /** Der laufende Abend, oder null. Es gibt hoechstens einen. */
     fun observeOpenSession(): Flow<SessionState?>
 

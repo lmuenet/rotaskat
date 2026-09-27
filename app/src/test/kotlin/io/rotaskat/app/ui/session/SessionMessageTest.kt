@@ -202,6 +202,7 @@ class SessionMessageTest {
         }
 
         override fun observeClub(): Flow<Club?> = flowOf(TEST_CLUB)
+        override fun observeSeatedPlayerIds(): Flow<Set<String>> = flowOf(emptySet())
         override fun observeOpenSession(): Flow<SessionState?> = state.map { it }
         override fun observeSessions(): Flow<List<SessionSummary>> = flowOf(emptyList())
         override fun observeSessionStates(): Flow<List<SessionState>> = flowOf(listOf(state.value))

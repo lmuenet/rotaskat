@@ -45,6 +45,7 @@ object Routes {
 
     const val LEADERBOARD = "rangliste"
     const val STATS = "statistik"
+    const val SETTINGS = "einstellungen"
 }
 
 /**
@@ -110,6 +111,8 @@ class RotaskatNavActions(private val navController: NavHostController) {
     fun toLeaderboard() = navController.navigate(Routes.LEADERBOARD)
 
     fun toStats() = navController.navigate(Routes.STATS)
+
+    fun toSettings() = navController.navigate(Routes.SETTINGS)
 
     /** Fluchtweg fuer Ziele, die diese Klasse noch nicht kennt. */
     fun to(route: String, builder: NavOptionsBuilder.() -> Unit = {}) =

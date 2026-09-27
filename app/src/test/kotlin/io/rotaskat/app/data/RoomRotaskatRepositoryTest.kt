@@ -242,6 +242,20 @@ class RoomRotaskatRepositoryTest {
         assertEquals(1, syncRequests)
     }
 
+    /** Grundlage fuer "entfernen" im Kader: wer sass, bleibt. Verworfene Abende zaehlen nicht. */
+    @Test
+    fun `Wer an einem Abend sass, steht in der Sitzliste - verworfene Abende zaehlen nicht`() = runTest {
+        repository.saveClub(TEST_CLUB)
+        val trio = repository.startSession(seatCount = 3, seats = mapOf(0 to "p0", 1 to "p1", 2 to "p2"), startedAt = T0)
+        assertEquals(setOf("p0", "p1", "p2"), repository.observeSeatedPlayerIds().first())
+
+        repository.discardSession(trio, at = T0)
+        assertEquals(emptySet(), repository.observeSeatedPlayerIds().first())
+
+        startEvening()
+        assertEquals(setOf("p0", "p1", "p2", "p3"), repository.observeSeatedPlayerIds().first())
+    }
+
     @Test
     fun `Ein Abend mit Runden wird nicht verworfen`() = runTest {
         val sessionId = startEvening()

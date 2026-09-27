@@ -64,6 +64,9 @@ class RoomRotaskatRepository(
     override fun observeRoster(): Flow<List<Player>> =
         playerDao.observeAll().map { players -> players.map { it.toModel() } }
 
+    override fun observeSeatedPlayerIds(): Flow<Set<String>> =
+        seatDao.observeSeatedPlayerIds().map { it.toSet() }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeOpenSession(): Flow<SessionState?> =
         sessionDao.observeOpen().flatMapLatest { session ->

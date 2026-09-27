@@ -26,6 +26,7 @@ import io.rotaskat.app.ui.onboarding.LocalSetupScreen
 import io.rotaskat.app.ui.onboarding.OnboardingScreen
 import io.rotaskat.app.ui.session.NewSessionScreen
 import io.rotaskat.app.ui.session.SessionScreen
+import io.rotaskat.app.ui.settings.SettingsScreen
 import io.rotaskat.app.ui.theme.RotaskatTheme
 import kotlinx.coroutines.flow.map
 
@@ -159,6 +160,10 @@ private fun RotaskatNavHost(loaded: LoadedMode, modifier: Modifier) {
 
         composable(Routes.STATS) {
             StatsScreen(actions = actions)
+        }
+
+        composable(Routes.SETTINGS) {
+            SettingsScreen(actions = actions)
         }
     }
 }

@@ -3,7 +3,7 @@ titel: Nach dem Einstieg gibt es keinen Weg mehr zu Kader, Cent-Satz oder Verein
 typ: fehlende Funktion
 schwere: hoch
 bereich: Navigation, Einstellungen, Onboarding
-status: offen
+status: erledigt
 gefunden: 2026-09-27, Funktionstest auf Pixel 10 Pro
 ---
 
@@ -45,3 +45,14 @@ es fehlt nur der Weg dorthin.
   - Anzeige von Modus, Server und Sync-Status (siehe #006).
 - Falls der Kader im Vereinsmodus bewusst serverseitig bleibt, das in der
   Oberfläche so sagen statt die Funktion einfach wegzulassen.
+
+## Umsetzung (Entscheidung des Nutzers: Zahnrad in der Übersicht)
+
+- Zahnrad oben rechts in der Übersicht → Bildschirm „Einstellungen“.
+- Ohne Verein: Kader hinzufügen/umbenennen, entfernen nur solange der Spieler
+  an keinem (nicht verworfenen) Abend saß; Cent je Punkt mit −/+ (gilt ab
+  dem nächsten Abend); „Einem Verein beitreten“ führt in den bestehenden
+  `JoinScreen` samt Übernahme der lokalen Abende.
+- Mit Verein: Kader und Satz nur lesend („wird auf dem Server gepflegt“),
+  dazu Serveradresse und Sync-Stand.
+- Regeln als reine Funktionen in `ui/settings/RosterEdits.kt` (getestet).
