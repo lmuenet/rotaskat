@@ -111,4 +111,9 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
+    // Compose-UI-Tests laufen ebenfalls unter Robolectric. Das Manifest-Artefakt
+    // bringt die leere Activity mit, in der die Testregel ihren Inhalt zeichnet.
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

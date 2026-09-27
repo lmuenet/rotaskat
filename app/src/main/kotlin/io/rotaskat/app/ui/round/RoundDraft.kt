@@ -380,6 +380,18 @@ data class RoundDraft(
     /** Von wem die Augen noch fehlen. Traegt den Hinweis unter der Eingabe. */
     val missingRamschSeats: List<Int> get() = activeSeats.filterNot { ramsch.entered(it) }
 
+    /**
+     * Was noch fehlt, solange es keine Herleitung gibt. Nach Alleinspieler und
+     * "Null" stand hier frueher weiter "Alleinspieler und Spielart waehlen",
+     * obwohl beides gewaehlt war.
+     */
+    fun missingHint(): String = when {
+        game == null && declarerSeat == null -> "Alleinspieler und Spielart wählen"
+        game == null -> "Spielart wählen"
+        isNull && nullVariant == null -> "Null-Variante wählen"
+        else -> "Alleinspieler wählen"
+    }
+
     /** Was der Alleinspieler bei diesem Ausgang bekaeme, in halben Punkten. */
     fun declarerHalfPoints(won: Boolean): Int? {
         val seat = declarerSeat ?: return null

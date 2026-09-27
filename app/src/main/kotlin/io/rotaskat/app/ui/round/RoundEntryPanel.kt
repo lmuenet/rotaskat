@@ -1,6 +1,12 @@
 package io.rotaskat.app.ui.round
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +18,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.common.CommitButton
 import io.rotaskat.app.ui.common.CountBadge
@@ -69,6 +78,7 @@ fun RoundEntryPanel(
 ) {
     var extrasExpanded by rememberSaveable { mutableStateOf(false) }
     var dealerExpanded by rememberSaveable { mutableStateOf(false) }
+    var moreMatadors by rememberSaveable { mutableStateOf(false) }
     val haptics = LocalHaptics.current
 
     fun pick(transform: (RoundDraft) -> RoundDraft) {
@@ -76,26 +86,35 @@ fun RoundEntryPanel(
         onDraftChange(transform)
     }
 
+    // Eine neue Runde beginnt wieder mit der kurzen Spitzenreihe. Eine
+    // Korrektur mit "mit 6" oeffnet die lange Reihe von selbst, sonst stuende
+    // der gespeicherte Wert unsichtbar hinter "mehr".
+    LaunchedEffect(draft.roundId) { moreMatadors = false }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(RotaskatDimens.sectionSpacing),
     ) {
 
-        DealerRow(
-            draft = draft,
-            seatNames = seatNames,
-            expanded = dealerExpanded,
-            onToggle = { dealerExpanded = !dealerExpanded },
-            onDealerChange = {
-                haptics.select()
-                onDealerChange(it)
-                dealerExpanded = false
-            },
-        )
-
         Column {
-            SectionLabel("Alleinspieler")
-            OptionGrid(columns = if (draft.seatCount == 4) 2 else 3, itemCount = draft.seatCount) { seat ->
+            // Der Geber steht im Kopf der Spielerauswahl statt in einer eigenen
+            // Zeile darueber: das spart eine Zeile, und er gehoert inhaltlich
+            // genau hierher - am Vierertisch ist er der, den man nicht antippen
+            // kann.
+            DealerHeader(
+                draft = draft,
+                seatNames = seatNames,
+                expanded = dealerExpanded,
+                onToggle = { dealerExpanded = !dealerExpanded },
+                onDealerChange = {
+                    haptics.select()
+                    onDealerChange(it)
+                    dealerExpanded = false
+                },
+            )
+            // Alle Spieler in EINER Reihe. Zwei Reihen kosteten 72dp, und genau
+            // die fehlten auf dem Geraet, um die Spitzen ohne Scrollen zu sehen.
+            OptionGrid(columns = draft.seatCount, itemCount = draft.seatCount) { seat ->
                 OptionTile(
                     label = seatNames[seat] ?: "Platz ${seat + 1}",
                     // Der Aussetzende bleibt sichtbar, damit die Sitzordnung
@@ -136,28 +155,12 @@ fun RoundEntryPanel(
         }
 
         if (draft.game != null && !draft.isNull && !draft.isRamsch) {
-            Column {
-                SectionLabel("Spitzen")
-                // Die Skala haengt an der Spielart: beim Grand gibt es vier
-                // Buben und damit vier Kacheln. Eine gemeinsame Reihe 1..11
-                // bot dort sieben Spiele an, die es nicht gibt.
-                //
-                // Die Spaltenzahl bleibt trotzdem 6: die vier Grand-Kacheln
-                // liegen damit genau dort, wo beim Farbspiel auch die 1 bis 4
-                // liegen, und der Rest der Zeile bleibt leer statt die Position
-                // zu verschieben.
-                val options = draft.matadorOptions
-                OptionGrid(columns = 6, itemCount = options.size) { index ->
-                    val value = options[index]
-                    OptionTile(
-                        label = "$value",
-                        selected = draft.matadors == value,
-                        onClick = { pick { it.copy(matadors = value) } },
-                        height = RotaskatDimens.tapTarget,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            MatadorPicker(
+                draft = draft,
+                showMore = moreMatadors || draft.matadors > MatadorRow.last,
+                onToggleMore = { moreMatadors = !moreMatadors },
+                onPick = { value -> pick { it.copy(matadors = value) } },
+            )
         }
 
         if (draft.isRamsch) {
@@ -226,42 +229,122 @@ fun RoundCommitBar(
 }
 
 /**
- * Wer gibt und damit aussetzt.
+ * Kopf der Spielerauswahl mit dem Geber.
  *
- * Steht ganz oben, weil es der einzige Wert ist, den die App selbst gesetzt hat.
- * Er ist eine Anzeige mit Korrekturmoeglichkeit, keine Frage - ein Tap auf
- * "aendern" oeffnet die Auswahl, sonst bleibt sie aus dem Weg.
+ * Der Geber ist der einzige Wert, den die App selbst gesetzt hat. Er ist eine
+ * Anzeige mit Korrekturmoeglichkeit, keine Frage - ein Tap oeffnet die Auswahl,
+ * ein Tap auf den richtigen Geber schliesst sie wieder.
  */
 @Composable
-private fun DealerRow(
+private fun DealerHeader(
     draft: RoundDraft,
     seatNames: Map<Int, String>,
     expanded: Boolean,
     onToggle: () -> Unit,
     onDealerChange: (Int) -> Unit,
 ) {
+    val dealer = seatNames[draft.dealerSeat] ?: "Platz ${draft.dealerSeat + 1}"
+    val dealerText = if (draft.seatCount == 4) "$dealer gibt und setzt aus" else "$dealer gibt"
     Column {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        ) {
             Text(
-                text = if (draft.seatCount == 4) {
-                    "Es gibt ${seatNames[draft.dealerSeat] ?: "Platz ${draft.dealerSeat + 1}"} und setzt aus"
-                } else {
-                    "Es gibt ${seatNames[draft.dealerSeat] ?: "Platz ${draft.dealerSeat + 1}"}"
-                },
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Alleinspieler",
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
-            if (!draft.editing) {
-                TextButton(onClick = onToggle) { Text(if (expanded) "fertig" else "ändern") }
+            if (draft.editing) {
+                Text(
+                    text = dealerText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                TextButton(onClick = onToggle) {
+                    Text(
+                        text = if (expanded) "Wer gibt?" else "$dealerText · ändern",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         if (expanded && !draft.editing) {
-            OptionGrid(columns = draft.seatCount, itemCount = draft.seatCount) { seat ->
+            OptionGrid(
+                columns = draft.seatCount,
+                itemCount = draft.seatCount,
+                modifier = Modifier.padding(bottom = RotaskatDimens.itemSpacing),
+            ) { seat ->
                 OptionTile(
                     label = seatNames[seat] ?: "Platz ${seat + 1}",
                     selected = draft.dealerSeat == seat,
                     onClick = { onDealerChange(seat) },
+                    height = RotaskatDimens.tapTarget,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+/** Die kurze Spitzenreihe. Mehr als vier Spitzen kommen selten vor. */
+private val MatadorRow = 1..4
+
+/**
+ * Die Spitzen.
+ *
+ * Eine Reihe mit 1 bis 4 und "mehr" statt zweier Reihen mit 1 bis 11. Die
+ * Reihe liegt damit auf dem Telefon ohne Scrollen direkt unter der Spielart -
+ * gerade hier ist ein falscher Wert am wahrscheinlichsten, weil der
+ * vorbelegte "mit 1" sonst unsichtbar stehen bliebe.
+ *
+ * Die Positionen bleiben fest: beim Grand fehlt nur "mehr", die 1 bis 4 liegen
+ * dort, wo sie beim Farbspiel auch liegen.
+ */
+@Composable
+private fun MatadorPicker(
+    draft: RoundDraft,
+    showMore: Boolean,
+    onToggleMore: () -> Unit,
+    onPick: (Int) -> Unit,
+) {
+    val options = draft.matadorOptions
+    val extra = options.filter { it !in MatadorRow }
+    Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+        SectionLabel("Spitzen")
+        OptionGrid(columns = MatadorRow.last + 1, itemCount = MatadorRow.last + 1) { index ->
+            if (index < MatadorRow.last) {
+                val value = index + 1
+                OptionTile(
+                    label = "$value",
+                    selected = draft.matadors == value,
+                    onClick = { onPick(value) },
+                    height = RotaskatDimens.tapTarget,
+                    modifier = Modifier.weight(1f),
+                )
+            } else if (extra.isNotEmpty()) {
+                OptionTile(
+                    label = if (showMore && draft.matadors <= MatadorRow.last) "weniger" else "mehr",
+                    selected = draft.matadors > MatadorRow.last,
+                    onClick = { if (draft.matadors <= MatadorRow.last) onToggleMore() },
+                    height = RotaskatDimens.tapTarget,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+        }
+        if (showMore && extra.isNotEmpty()) {
+            OptionGrid(columns = MatadorRow.last + 1, itemCount = extra.size) { index ->
+                val value = extra[index]
+                OptionTile(
+                    label = "$value",
+                    selected = draft.matadors == value,
+                    onClick = { onPick(value) },
                     height = RotaskatDimens.tapTarget,
                     modifier = Modifier.weight(1f),
                 )
@@ -278,7 +361,9 @@ private fun GamePicker(draft: RoundDraft, onPick: ((RoundDraft) -> RoundDraft) -
         add(GamePick.Null to "Null")
         add(GamePick.Ramsch to "Ramsch")
     }
-    OptionGrid(columns = 3, itemCount = picks.size) { index ->
+    // Vier Spalten: die vier Farben in der ersten Reihe, Grand, Null und Ramsch
+    // in der zweiten. Drei Spalten brauchten eine dritte Reihe.
+    OptionGrid(columns = 4, itemCount = picks.size) { index ->
         val (pick, label) = picks[index]
         OptionTile(
             label = label,
@@ -302,6 +387,7 @@ private fun GamePicker(draft: RoundDraft, onPick: ((RoundDraft) -> RoundDraft) -
  * Runden gar nicht gebraucht werden und den Vier-Tap-Pfad sonst optisch
  * zuschuetten wuerden.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExtrasSection(
     draft: RoundDraft,
@@ -309,7 +395,17 @@ private fun ExtrasSection(
     onToggle: () -> Unit,
     onChange: ((RoundDraft) -> RoundDraft) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+    // Der aufgeklappte Bereich liegt unter der Falz. Ohne Hinscrollen sah es so
+    // aus, als haette der Tap nichts bewirkt.
+    val bringIntoView = remember { BringIntoViewRequester() }
+    LaunchedEffect(expanded) {
+        if (expanded) bringIntoView.bringIntoView()
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing),
+        modifier = Modifier.bringIntoViewRequester(bringIntoView),
+    ) {
         Surface(
             onClick = onToggle,
             shape = RoundedCornerShape(14.dp),
@@ -417,7 +513,11 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
  * genau dorthin verlagern, wo am Tisch die Fehler entstehen. Umgekehrt ist die
  * live gerechnete Zahl die unabhaengige Zweitrechnung: wer im Kopf auf etwas
  * anderes kommt, sieht die Abweichung, bevor die Runde gespeichert ist. Die
- * Herleitung darunter macht sie gegen die Ansage pruefbar.
+ * Herleitung daneben macht sie gegen die Ansage pruefbar.
+ *
+ * Zahl und Herleitung stehen nebeneinander statt untereinander. Die Karte ist
+ * damit so hoch wie die Zahl, auch wenn die Herleitung auf drei Zeilen waechst -
+ * vorher schob jede Zusatzzeile den Scrollbereich darueber weiter zusammen.
  */
 @Composable
 private fun GameValueDisplay(draft: RoundDraft) {
@@ -427,9 +527,10 @@ private fun GameValueDisplay(draft: RoundDraft) {
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 12.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 16.dp),
         ) {
             Text(
                 text = value?.toString() ?: "-",
@@ -439,12 +540,18 @@ private fun GameValueDisplay(draft: RoundDraft) {
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
+                textAlign = TextAlign.Center,
+                // Feste Breite fuer drei Ziffern: die Herleitung springt sonst
+                // bei jedem Wechsel zwischen 18 und 108 zur Seite.
+                modifier = Modifier.widthIn(min = 96.dp),
             )
             Text(
-                text = draft.derivation() ?: "Alleinspieler und Spielart wählen",
+                text = draft.derivation() ?: draft.missingHint(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
         }
     }
