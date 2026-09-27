@@ -286,8 +286,10 @@ Abschnittslabel.
 - "Fruehere Abende" als Abschnittslabel, darunter eine Liste ohne Karten:
   Datum (Barlow SemiBold) · "24 Runden · zu viert" (`labelMuted`) · Sieger mit
   Punkten rechts. Tap fuehrt wie bisher zur Abrechnung.
-- "+ Neuer Abend" als Extended FAB: umrandet in Gold, solange ein Abend
-  laeuft; gefuellt in Gold, wenn keiner laeuft (dann ist es die Hauptaktion).
+- "+ Neuer Abend" als Extended FAB in Gold, nur wenn kein Abend laeuft. Laeuft
+  einer, ist "Weiterspielen" die Hauptaktion; ein zweiter offener Abend waere
+  sonst moeglich, weil weder NewSessionScreen noch startSession ihn
+  verhindern.
 - Sync-Hinweis (nur Vereinsmodus) bleibt, als einzeiliger Hinweis unter der
   Liste.
 

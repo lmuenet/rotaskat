@@ -1,6 +1,5 @@
 package io.rotaskat.app.ui.eval
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -28,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.SessionState
@@ -80,20 +79,9 @@ fun OverviewScreen(
             )
         },
         floatingActionButton = {
-            val running = states.any { it.session.status == SessionStatus.OPEN }
-            // Laeuft ein Abend, ist "Weiterspielen" die Hauptaktion und der neue
-            // Abend nur umrandet. Laeuft keiner, ist er die Hauptaktion.
-            ExtendedFloatingActionButton(
+            NewSessionFab(
+                running = states.any { it.session.status == SessionStatus.OPEN },
                 onClick = { actions.toNewSession() },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("Neuer Abend") },
-                containerColor = if (running) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primary,
-                contentColor = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
-                modifier = if (running) {
-                    Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp))
-                } else {
-                    Modifier
-                },
             )
         },
     ) { padding ->
@@ -146,6 +134,35 @@ fun OverviewScreen(
             }
         }
     }
+}
+
+/**
+ * Der "Neuer Abend"-Knopf, nur sichtbar, wenn keiner laeuft.
+ *
+ * Es gibt hoechstens einen offenen Abend: weder `NewSessionScreen` noch
+ * `RoomRotaskatRepository.startSession` verhindern einen zweiten offenen
+ * Abend - der versteckte Knopf ist die einzige Schranke dagegen. Laeuft
+ * einer, ist "Weiterspielen" auf der Karte die Hauptaktion.
+ */
+@Composable
+internal fun NewSessionFab(running: Boolean, onClick: () -> Unit) {
+    if (running) return
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+        text = { Text("Neuer Abend") },
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        // Tag statt Textsuche: Robolectric haengt das Layout des erweiterten
+        // FAB fest, sodass sein Textknoten selbst als nicht angezeigt gilt -
+        // der aeussere, korrekt vermessene Knoten bleibt zuverlaessig testbar.
+        modifier = Modifier.testTag(NewSessionFabTags.FAB),
+    )
+}
+
+/** Test-Tag fuer den "Neuer Abend"-Knopf. */
+internal object NewSessionFabTags {
+    const val FAB = "new-session-fab"
 }
 
 /**
