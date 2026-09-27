@@ -48,6 +48,7 @@ class PaletteContrastTest {
             "Verloren-Button" to (score.onLossContainer to score.lossContainer),
             "Gewinn auf Grund" to (score.gain to scheme.background),
             "Verlust auf Grund" to (score.loss to scheme.background),
+            "Null-Wert auf Grund" to (score.neutral to scheme.background),
             "Gold-Button" to (scheme.onPrimary to scheme.primary),
             "Menue" to (scheme.onSurface to scheme.surfaceContainerHigh),
             "Gold im Menue" to (scheme.primary to scheme.surfaceContainerHigh),
@@ -69,6 +70,10 @@ class PaletteContrastTest {
             "deaktivierter Umriss" to (accent.disabledOutline to scheme.background),
             // Die Trennlinie vor "Abend beenden ..." im Menue (F8).
             "Trennlinie im Menue" to (scheme.outline to scheme.surfaceContainerHigh),
+            "Linie Sitz 1" to (RotaskatSeriesStyles[0].color to scheme.background),
+            "Linie Sitz 2" to (RotaskatSeriesStyles[1].color to scheme.background),
+            "Linie Sitz 3" to (RotaskatSeriesStyles[2].color to scheme.background),
+            "Linie Sitz 4" to (RotaskatSeriesStyles[3].color to scheme.background),
         ),
     )
 }

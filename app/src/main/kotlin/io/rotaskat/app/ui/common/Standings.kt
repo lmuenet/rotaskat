@@ -125,11 +125,7 @@ fun StandingsTable(
                     Text(
                         text = formatPoints(row.halfPoints),
                         style = RotaskatTextStyles.scoreMedium,
-                        color = when {
-                            row.halfPoints > 0 -> colors.gain
-                            row.halfPoints < 0 -> colors.loss
-                            else -> colors.neutral
-                        },
+                        color = colors.forValue(row.halfPoints),
                     )
                 }
             }

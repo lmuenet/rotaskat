@@ -104,11 +104,7 @@ internal fun LastChangeRow(
                 Text(
                     text = formatPoints(half),
                     style = RotaskatTextStyles.scoreMedium,
-                    color = when {
-                        half > 0 -> colors.gain
-                        half < 0 -> colors.loss
-                        else -> colors.neutral
-                    },
+                    color = colors.forValue(half.toLong()),
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
             }

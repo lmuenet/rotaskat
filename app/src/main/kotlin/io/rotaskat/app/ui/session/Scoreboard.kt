@@ -105,11 +105,7 @@ internal fun Scoreboard(
                     Text(
                         text = points,
                         style = RotaskatTextStyles.scoreLarge,
-                        color = when {
-                            half > 0 -> colors.gain
-                            half < 0 -> colors.loss
-                            else -> colors.neutral
-                        },
+                        color = colors.forValue(half),
                     )
                 }
             }

@@ -162,11 +162,7 @@ internal fun LiveSessionCard(
                 Text(
                     text = formatPoints(leader.second),
                     style = RotaskatTextStyles.scoreLarge.copy(fontSize = 30.sp, fontWeight = FontWeight.Bold),
-                    color = when {
-                        leader.second > 0 -> score.gain
-                        leader.second < 0 -> score.loss
-                        else -> score.neutral
-                    },
+                    color = score.forValue(leader.second),
                 )
             }
             Text(

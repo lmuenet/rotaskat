@@ -109,30 +109,33 @@ val RotaskatColorScheme: ColorScheme = darkColorScheme(
 @Immutable
 data class RotaskatScoreColors(
     val gain: Color,
-    val onGain: Color,
     val gainContainer: Color,
     val onGainContainer: Color,
     val loss: Color,
-    val onLoss: Color,
     val lossContainer: Color,
     val onLossContainer: Color,
-    /** Genau null Punkte. Bewusst weder gruen noch rot. */
+    /**
+     * Genau null Punkte. Bewusst weder gruen noch rot. Warmgrau, passend zum
+     * Anthrazit - nicht violett.
+     */
     val neutral: Color,
-    /** Der Aussetzende: sichtbar vorhanden, aber ohne Beteiligung. */
-    val sittingOut: Color,
-)
+) {
+    /** Die Farbe einer Punktzahl oder eines Betrags nach seinem Vorzeichen. */
+    fun forValue(value: Long): Color = when {
+        value > 0 -> gain
+        value < 0 -> loss
+        else -> neutral
+    }
+}
 
 val RotaskatScoreColorsDark = RotaskatScoreColors(
     gain = Color(0xFF6FD08C),
-    onGain = Color(0xFF00391B),
     gainContainer = Color(0xFF1E5A37),
     onGainContainer = Color(0xFFE3F7E8),
     loss = Color(0xFFFF8A80),
-    onLoss = Color(0xFF5C0007),
     lossContainer = Color(0xFF6E2320),
     onLossContainer = Color(0xFFFFE3E0),
-    neutral = Color(0xFFB6AFBC),
-    sittingOut = Color(0xFF7A737F),
+    neutral = Color(0xFFB5AC9C),
 )
 
 val LocalScoreColors = staticCompositionLocalOf { RotaskatScoreColorsDark }

@@ -312,11 +312,7 @@ private fun BalanceTable(
                         Text(
                             text = formatCents(balance.cents),
                             style = RotaskatTextStyles.scoreMedium,
-                            color = when {
-                                balance.cents > 0 -> colors.gain
-                                balance.cents < 0 -> colors.loss
-                                else -> colors.neutral
-                            },
+                            color = colors.forValue(balance.cents),
                         )
                     }
                 }

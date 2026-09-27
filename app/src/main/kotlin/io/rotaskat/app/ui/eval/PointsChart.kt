@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.drawText
@@ -157,12 +156,7 @@ fun PointsChart(
             drawPath(
                 path = path,
                 color = line.style.color,
-                style = Stroke(
-                    width = 2.5.dp.toPx(),
-                    pathEffect = line.style.dash?.let { dash ->
-                        PathEffect.dashPathEffect(dash.map { it.dp.toPx() }.toFloatArray())
-                    },
-                ),
+                style = Stroke(width = 2.5.dp.toPx()),
             )
             val last = line.cumulative.lastIndex
             drawCircle(
@@ -192,9 +186,6 @@ fun ChartLegend(series: List<ChartSeries>, modifier: Modifier = Modifier) {
                         start = Offset(0f, size.height / 2f),
                         end = Offset(size.width, size.height / 2f),
                         strokeWidth = 2.5.dp.toPx(),
-                        pathEffect = line.style.dash?.let { dash ->
-                            PathEffect.dashPathEffect(dash.map { it.dp.toPx() }.toFloatArray())
-                        },
                     )
                 }
                 Text(

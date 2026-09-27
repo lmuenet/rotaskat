@@ -221,11 +221,7 @@ private fun PastSessionRow(
                 Text(
                     text = formatPoints(topPoints),
                     style = RotaskatTextStyles.scoreMedium,
-                    color = when {
-                        topPoints > 0 -> colors.gain
-                        topPoints < 0 -> colors.loss
-                        else -> colors.neutral
-                    },
+                    color = colors.forValue(topPoints),
                 )
             }
         }

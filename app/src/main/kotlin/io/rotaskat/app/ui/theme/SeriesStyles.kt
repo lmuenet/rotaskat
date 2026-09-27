@@ -6,18 +6,14 @@ import androidx.compose.ui.graphics.Color
 /**
  * Wie eine Linie im Punkteverlauf gezeichnet wird.
  *
- * Zwei Kanaele, nicht einer: Farbe UND Strichmuster. Dieselbe Ueberlegung wie
- * beim immer mitgeschriebenen Vorzeichen in `formatPoints` - vier Linien, die
- * sich nur in der Farbe unterscheiden, sind bei Rot-Gruen-Schwaeche, im
- * Kneipenlicht und auf einem Graustufen-Screenshot vier gleiche Linien.
- *
- * [dash] ist die Strichfolge in dp (Strich, Luecke, ...), `null` heisst
- * durchgezogen.
+ * Nur die Farbe. Der zweite Kanal ist nicht mehr ein Strichmuster, sondern der
+ * Name am Linienende (siehe `PointsChart`): eine Beschriftung ist bei
+ * Rot-Gruen-Schwaeche, im Kneipenlicht und in Graustufen eindeutig, ein
+ * gepunktetes Hellviolett war es im Geraetetest nicht.
  */
 @Immutable
 data class SeriesStyle(
     val color: Color,
-    val dash: List<Float>? = null,
 )
 
 /**
@@ -32,16 +28,17 @@ data class SeriesStyle(
  * die Reihenfolge ist die der Sitzplaetze - Platz 0 bekommt immer dieselbe
  * Farbe, damit der Blick zwischen Diagramm und Tabelle nicht neu suchen muss.
  *
- * Die Toene sind auf die dunkle Flaeche abgestimmt, weil die App nur ein
- * dunkles Schema hat (siehe [RotaskatColorScheme]). Kaeme je ein helles dazu,
- * ist diese Liste die einzige Stelle, die nachzuziehen waere - das Strichmuster
- * traegt die Unterscheidung ohnehin auch ohne Farbe.
+ * Kein Strichmuster mehr - vier kraeftige, klar unterscheidbare Farben, jede
+ * mindestens 3:1 gegen den Grund (siehe `PaletteContrastTest`). Die Toene sind
+ * auf die dunkle Flaeche abgestimmt, weil die App nur ein dunkles Schema hat
+ * (siehe [RotaskatColorScheme]). Kaeme je ein helles dazu, ist diese Liste die
+ * einzige Stelle, die nachzuziehen waere.
  */
 val RotaskatSeriesStyles: List<SeriesStyle> = listOf(
-    SeriesStyle(Color(0xFFF2C46B)),
-    SeriesStyle(Color(0xFF9FCBE8), dash = listOf(10f, 6f)),
-    SeriesStyle(Color(0xFFC9A7E8), dash = listOf(2f, 6f)),
-    SeriesStyle(Color(0xFFD9D2C4), dash = listOf(14f, 5f, 2f, 5f)),
+    SeriesStyle(Color(0xFFF2C46B)), // Gold
+    SeriesStyle(Color(0xFF7FC4F0)), // Himmelblau
+    SeriesStyle(Color(0xFFC8A8FF)), // Flieder
+    SeriesStyle(Color(0xFFEDE6D8)), // Elfenbein
 )
 
 /** Der Stil eines Sitzplatzes. Wiederholt sich, falls je mehr Plaetze kaemen. */
