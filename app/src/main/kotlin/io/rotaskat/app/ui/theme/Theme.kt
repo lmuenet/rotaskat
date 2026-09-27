@@ -35,7 +35,10 @@ fun RotaskatTheme(content: @Composable () -> Unit) {
         }
     }
 
-    CompositionLocalProvider(LocalScoreColors provides RotaskatScoreColorsDark) {
+    CompositionLocalProvider(
+        LocalScoreColors provides RotaskatScoreColorsDark,
+        LocalAccentColors provides RotaskatAccentColorsDark,
+    ) {
         MaterialTheme(
             colorScheme = RotaskatColorScheme,
             typography = RotaskatTypography,
@@ -48,3 +51,8 @@ fun RotaskatTheme(content: @Composable () -> Unit) {
 val MaterialTheme.scoreColors: RotaskatScoreColors
     @Composable
     get() = LocalScoreColors.current
+
+/** Kurzform fuer Farbsymbole, Labels und den deaktivierten Umriss. */
+val MaterialTheme.accentColors: RotaskatAccentColors
+    @Composable
+    get() = LocalAccentColors.current

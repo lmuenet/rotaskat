@@ -7,7 +7,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * Die Palette der App.
+ * Die Palette der App: "Kartentisch".
  *
  * Es gibt bewusst nur ein dunkles Schema und keinen Hellmodus. Gespielt wird in
  * einer Kneipe mit schlechtem Licht; eine helle Flaeche auf dem Tisch blendet
@@ -15,17 +15,22 @@ import androidx.compose.ui.graphics.Color
  * Anpassung. Der Hellmodus waere kein Zugewinn, sondern eine Fehlbedienung mit
  * Umschalter davor.
  *
- * Die Grundflaeche ist bewusst NICHT reines Schwarz: auf OLED-Displays laesst
- * ein #000000-Grund Kanten und Textraender sichtbar schmieren, und die Erhoehung
- * einer Karte gegen den Hintergrund waere nicht mehr darstellbar.
+ * Die Grundflaeche ist warmes Anthrazit und bewusst NICHT reines Schwarz: auf
+ * OLED-Displays laesst ein #000000-Grund Kanten und Textraender sichtbar
+ * schmieren, und die Erhoehung einer Kachel gegen den Hintergrund waere nicht
+ * mehr darstellbar. Warm statt der violettstichigen Material-Neutraltoene, weil
+ * Gold und Elfenbein darauf wie Karten auf einem Tisch stehen statt wie
+ * Leuchtschrift auf einem Bildschirm.
  */
-private val Surface = Color(0xFF141218)
+private val Surface = Color(0xFF16140F)
 
 // Warmes Gold als Leitfarbe. Bewusst weder gruen noch rot: beide Toene sind fuer
 // Gewinn und Verlust reserviert und duerfen an keiner anderen Stelle der
 // Oberflaeche auftauchen, sonst verliert das Signal seine Bedeutung.
 private val Gold = Color(0xFFF2C46B)
-private val GoldDark = Color(0xFF3D2E00)
+
+// Elfenbein: Haupttext und die "schwarzen" Farben Pik und Kreuz.
+private val Ivory = Color(0xFFEDE6D8)
 
 /**
  * Das Farbschema. Handverlesen statt aus Dynamic Color abgeleitet - siehe
@@ -35,9 +40,11 @@ private val GoldDark = Color(0xFF3D2E00)
  */
 val RotaskatColorScheme: ColorScheme = darkColorScheme(
     primary = Gold,
-    onPrimary = GoldDark,
-    primaryContainer = Color(0xFF574200),
-    onPrimaryContainer = Color(0xFFFFDF9E),
+    onPrimary = Color(0xFF2A1F00),
+    // Der Goldschimmer einer gewaehlten Kachel. Dunkel genug, dass der
+    // Goldrand darauf der staerkere Kanal bleibt.
+    primaryContainer = Color(0xFF3A2F14),
+    onPrimaryContainer = Color(0xFFFFE7B0),
     inversePrimary = Color(0xFF6F5B00),
 
     secondary = Color(0xFFCFC5B4),
@@ -57,24 +64,28 @@ val RotaskatColorScheme: ColorScheme = darkColorScheme(
     onErrorContainer = Color(0xFFFFDAD6),
 
     background = Surface,
-    onBackground = Color(0xFFE7E0E8),
+    onBackground = Ivory,
     surface = Surface,
-    onSurface = Color(0xFFE7E0E8),
-    surfaceVariant = Color(0xFF3A343F),
-    onSurfaceVariant = Color(0xFFCCC3D0),
+    onSurface = Ivory,
+    surfaceVariant = Color(0xFF39342C),
+    onSurfaceVariant = Color(0xFFC9BFAE),
     surfaceTint = Gold,
 
-    surfaceContainerLowest = Color(0xFF0E0C12),
-    surfaceContainerLow = Color(0xFF1C1A21),
-    surfaceContainer = Color(0xFF201E26),
-    surfaceContainerHigh = Color(0xFF2B2831),
-    surfaceContainerHighest = Color(0xFF36323C),
+    surfaceContainerLowest = Color(0xFF100E0A),
+    // Die untere Navigationsleiste.
+    surfaceContainerLow = Color(0xFF1E1B16),
+    // Kacheln, Karten, die Zusaetze-Zeile.
+    surfaceContainer = Color(0xFF221F19),
+    // Menue, Dialoge, Sheet, Undo-Zeile.
+    surfaceContainerHigh = Color(0xFF2E2A23),
+    surfaceContainerHighest = Color(0xFF39342C),
 
-    outline = Color(0xFF958E9B),
-    outlineVariant = Color(0xFF4A444F),
+    outline = Color(0xFF8F8676),
+    // Der Rand einer nicht gewaehlten Kachel.
+    outlineVariant = Color(0xFF3A352C),
 
-    inverseSurface = Color(0xFFE7E0E8),
-    inverseOnSurface = Color(0xFF322F36),
+    inverseSurface = Ivory,
+    inverseOnSurface = Color(0xFF2E2A23),
     scrim = Color(0xFF000000),
 )
 
@@ -89,15 +100,22 @@ val RotaskatColorScheme: ColorScheme = darkColorScheme(
  * Die Farbe ist ohnehin nur der Zweitkanal. Traeger der Information ist das
  * immer mitgeschriebene Vorzeichen - siehe `formatPoints` -, damit die Tabelle
  * auch bei Rot-Gruen-Schwaeche und in der Kneipenbeleuchtung lesbar bleibt.
+ *
+ * [gainContainer] und [lossContainer] sind die Flaechen von "Gewonnen" und
+ * "Verloren": satt und dunkel statt pastellig, damit sie neben dem Gold nicht
+ * wie Fremdkoerper wirken und trotzdem die groessten Flaechen des Bildschirms
+ * bleiben.
  */
 @Immutable
 data class RotaskatScoreColors(
     val gain: Color,
     val onGain: Color,
     val gainContainer: Color,
+    val onGainContainer: Color,
     val loss: Color,
     val onLoss: Color,
     val lossContainer: Color,
+    val onLossContainer: Color,
     /** Genau null Punkte. Bewusst weder gruen noch rot. */
     val neutral: Color,
     /** Der Aussetzende: sichtbar vorhanden, aber ohne Beteiligung. */
@@ -107,12 +125,42 @@ data class RotaskatScoreColors(
 val RotaskatScoreColorsDark = RotaskatScoreColors(
     gain = Color(0xFF6FD08C),
     onGain = Color(0xFF00391B),
-    gainContainer = Color(0xFF1B4D2E),
+    gainContainer = Color(0xFF1E5A37),
+    onGainContainer = Color(0xFFE3F7E8),
     loss = Color(0xFFFF8A80),
     onLoss = Color(0xFF5C0007),
-    lossContainer = Color(0xFF6B2020),
+    lossContainer = Color(0xFF6E2320),
+    onLossContainer = Color(0xFFFFE3E0),
     neutral = Color(0xFFB6AFBC),
     sittingOut = Color(0xFF7A737F),
 )
 
 val LocalScoreColors = staticCompositionLocalOf { RotaskatScoreColorsDark }
+
+/**
+ * Farben, die weder zum Material-Schema noch zu Gewinn/Verlust gehoeren.
+ *
+ * [suitRed] ist Kupfer, nicht Rot: Karo und Herz sollen sich von Pik und Kreuz
+ * so unterscheiden wie auf dem Kartenblatt, ohne dass die Farbe des Verlusts
+ * eine zweite Bedeutung bekommt. Kupfer steht deshalb nie an einer Zahl.
+ */
+@Immutable
+data class RotaskatAccentColors(
+    /** Karo und Herz. */
+    val suitRed: Color,
+    /** Pik und Kreuz. */
+    val suitBlack: Color,
+    /** Abschnittslabels, Hinweise, inaktive Ziele der unteren Leiste. */
+    val labelMuted: Color,
+    /** Gestrichelter Umriss eines Ergebnisbuttons, der noch nicht bereit ist. */
+    val disabledOutline: Color,
+)
+
+val RotaskatAccentColorsDark = RotaskatAccentColors(
+    suitRed = Color(0xFFDB8350),
+    suitBlack = Ivory,
+    labelMuted = Color(0xFF9E9483),
+    disabledOutline = Color(0xFF7A7060),
+)
+
+val LocalAccentColors = staticCompositionLocalOf { RotaskatAccentColorsDark }
