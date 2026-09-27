@@ -228,7 +228,7 @@ private fun CentsSection(cents: Int, local: Boolean, onChange: (Int) -> Unit) {
     EvalSection(
         title = "Geld",
         info = if (local) {
-            "Gilt ab dem nächsten Abend. Laufende und beendete Abende behalten ihren Satz."
+            "Laufende und beendete Abende behalten ihren Satz."
         } else {
             null
         },

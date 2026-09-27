@@ -110,7 +110,7 @@ fun LocalSetupScreen(
 
             SectionLabel("Wer spielt mit", Modifier.padding(top = RotaskatDimens.sectionSpacing))
             Text(
-                text = "Mindestens $MIN_PLAYERS – wer fehlt, sitzt einfach nicht mit am Tisch.",
+                text = "Mindestens $MIN_PLAYERS – wer mitspielt, wählt ihr jeden Abend neu.",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
