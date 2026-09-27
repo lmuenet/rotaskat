@@ -1,5 +1,8 @@
 package io.rotaskat.app.ui.common
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -41,5 +44,17 @@ class SectionHeaderTest {
         compose.onNodeWithContentDescription("Erklärung zu Punkte")
             .assertWidthIsAtLeast(56.dp)
             .assertHeightIsAtLeast(56.dp)
+    }
+
+    @Test
+    fun `Titel meldet sich als Ueberschrift`() {
+        compose.setContent { RotaskatTheme { SectionHeader(title = "Stand") } }
+        compose.onNodeWithText("Stand").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+    }
+
+    @Test
+    fun `InfoSheet-Titel meldet sich ebenfalls als Ueberschrift`() {
+        compose.setContent { RotaskatTheme { InfoSheetContent(title = "Punkte", text = "Erklaerung") } }
+        compose.onNodeWithText("Punkte").assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
     }
 }
