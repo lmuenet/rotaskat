@@ -159,3 +159,17 @@ Offen für Teil 2 (Auswertung) und später:
   Sync-Hinweis einzeilig.
 - Nicht geprüft: TalkBack-Sprachausgabe gehört (nur Semantik-Baum), Querformat,
   Tablet, große Schrift.
+
+## Stand nach Design-Runde Teil 2 (27.09.2026)
+
+Umgesetzt nach `docs/superpowers/specs/2026-09-27-design-auswertung-design.md`,
+Tests grün, **auf dem Gerät noch nicht geprüft**. Beim nächsten Gerätetest
+(App-Daten vorher sichern, danach zurückspielen) prüfen:
+
+- Punkteverlauf mit 4 Spielern und Gleichstand am Ende: Namen am Linienende
+  überdecken sich nicht, Verbindungslinien bei verschobenen Namen.
+- Rangliste, Statistik (Chips, Kennzahl-Kacheln, ⓘ-Sheets), Abrechnung
+  (Icons, Karten), Einstellungen, Beitritt.
+- Untere Leiste beim Wechsel Abend ↔ Startseite: wächst mit, kein Sprung im
+  Abend-Bildschirm.
+- TalkBack: Kacheln als ein Fokusstopp, Überschriften als Überschrift.
