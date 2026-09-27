@@ -56,10 +56,8 @@ class LeavingGuardTest {
         show()
         compose.mainClock.autoAdvance = false
         visible = false
-        repeat(3) {
-            compose.mainClock.advanceTimeByFrame()
-            compose.waitForIdle()
-        }
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeBy(100)
         compose.onNodeWithTag("screen").performClick()
         assertEquals(0, clicks)
     }

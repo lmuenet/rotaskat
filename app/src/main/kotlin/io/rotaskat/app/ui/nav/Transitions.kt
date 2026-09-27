@@ -11,6 +11,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -53,22 +55,28 @@ internal object RotaskatTransitions {
  *
  * Ein Tap kurz nach "Zurueck" traf sonst noch den alten Bildschirm - im
  * Geraetetest oeffnete das den Dialog "Abend beenden?" eines Abends, den man
- * gerade verlassen hatte. Die Events werden im ersten Durchlauf verbraucht,
- * bevor ein Knopf darunter sie sieht.
+ * gerade verlassen hatte. Der Abfangmodifier haengt darum von Anfang an am
+ * Bildschirm, nicht erst ab dem Moment des Verlassens: ein neu eingehaengtes
+ * `pointerInput` braucht selbst ein paar Frames, bis seine Coroutine anlaeuft,
+ * und genau in dieser Anlaufzeit waere der erste Tap nach "Zurueck" wieder
+ * durchgerutscht. Stattdessen entscheidet jedes Event fuer sich, ob es
+ * verbraucht wird.
  */
 @Composable
 internal fun AnimatedVisibilityScope.LeavingGuard(content: @Composable () -> Unit) {
-    val leaving = transition.targetState != EnterExitState.Visible
-    val guard = if (leaving) {
-        Modifier.pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
-                }
-            }
-        }
-    } else {
+    val leaving by rememberUpdatedState(transition.targetState != EnterExitState.Visible)
+    Box(
         Modifier
-    }
-    Box(Modifier.fillMaxSize().then(guard)) { content() }
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (leaving) {
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
+                }
+            },
+    ) { content() }
 }
