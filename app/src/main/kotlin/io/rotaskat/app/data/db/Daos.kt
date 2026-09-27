@@ -172,7 +172,9 @@ interface RoundDao {
     @Query("SELECT * FROM round WHERE pendingSync = 1 ORDER BY sessionId, sequence, id LIMIT :limit")
     suspend fun pending(limit: Int): List<RoundEntity>
 
-    @Query("SELECT COUNT(*) FROM round WHERE pendingSync = 1")
+    // Nur lebende Runden: die Zahl steht in der Oberflaeche, und dort gibt es
+    // geloeschte Runden nicht. Ihre Tombstones werden trotzdem synchronisiert.
+    @Query("SELECT COUNT(*) FROM round WHERE pendingSync = 1 AND deletedAt IS NULL")
     fun observePendingCount(): Flow<Int>
 
     /** Siehe [SessionDao.clearPending]: die Revision ist die Absicherung. */

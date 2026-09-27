@@ -3,7 +3,7 @@ titel: Lokaler Modus zeigt „wartet auf Sync“ und „X Runden warten auf den 
 typ: bug
 schwere: mittel
 bereich: Übersicht, Abend, Sync
-status: offen
+status: erledigt
 gefunden: 2026-09-27 (app_mode = LOCAL im DataStore)
 ---
 
@@ -35,3 +35,16 @@ den Modus aber nicht ab.
   `SyncWorker.schedulePeriodic` erst nach dem Beitritt registrieren.
 - `observePendingSyncCount()` ohne Tombstones zählen oder in der Oberfläche
   getrennt ausweisen.
+
+## Umsetzung
+
+- „wartet auf Sync“ in der Rundenliste und der Hinweis in der Übersicht nur
+  noch bei `AppMode.CLUB`.
+- `observePendingSyncCount()` zählt nur lebende Runden.
+- Der periodische Sync wird nur mit Verein angemeldet (und sonst abgemeldet);
+  `MainActivity` beobachtet den Modus, der Beitritt greift sofort.
+- Bewusst belassen: der einmalige Anstoß nach jeder Schreiboperation. Er
+  kostet ein `enqueueUniqueWork`, der Worker endet ohne Verein sofort mit
+  `NotJoinedException`, und er stellt sicher, dass direkt nach dem Beitritt
+  (`adoptLocalData`) synchronisiert wird, ohne dass der Anstoß vom
+  asynchron gelesenen Modus abhängt.

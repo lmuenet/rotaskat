@@ -7,12 +7,15 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.rotaskat.app.data.RotaskatGraph
 import io.rotaskat.app.data.RotaskatRepository
 import io.rotaskat.app.data.SessionState
+import io.rotaskat.app.data.settings.AppMode
 import io.rotaskat.shared.model.Player
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
@@ -60,6 +63,7 @@ class SessionDetailViewModel(
 class EvaluationViewModel(
     repository: RotaskatRepository,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    mode: Flow<AppMode?> = flowOf(AppMode.CLUB),
 ) : ViewModel() {
 
     val states: StateFlow<List<SessionState>> = repository.observeSessionStates()
@@ -72,8 +76,13 @@ class EvaluationViewModel(
      * Wie viele Runden noch auf den Server warten. Reine Anzeige und kein Tor:
      * die App funktioniert ohne Netz vollstaendig, die Zahl sagt nur, dass noch
      * etwas unterwegs ist.
+     *
+     * Ohne Verein gibt es keinen Server und damit nichts, worauf gewartet wird -
+     * die Zahl las sich dort wie ein Fehler, der sich nie aufloest.
      */
-    val pendingSync: StateFlow<Int> = repository.observePendingSyncCount()
+    val pendingSync: StateFlow<Int> = combine(repository.observePendingSyncCount(), mode) { count, current ->
+        if (current == AppMode.CLUB) count else 0
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     private val _period = MutableStateFlow<Period>(Period.AllTime)
@@ -95,7 +104,7 @@ class EvaluationViewModel(
 
     companion object {
         fun factory(graph: RotaskatGraph) = viewModelFactory {
-            initializer { EvaluationViewModel(graph.repository) }
+            initializer { EvaluationViewModel(graph.repository, mode = graph.settings.mode) }
         }
     }
 }

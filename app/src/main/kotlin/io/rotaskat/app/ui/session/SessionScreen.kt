@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.ScoredRound
 import io.rotaskat.app.data.SessionState
+import io.rotaskat.app.data.settings.AppMode
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.KeepScreenOn
 import io.rotaskat.app.ui.common.LocalHaptics
@@ -92,6 +93,9 @@ fun SessionScreen(
     val draft by viewModel.draft.collectAsState()
     val message by viewModel.message.collectAsState()
     val lastChange by viewModel.lastChange.collectAsState()
+    // Ohne Verein gibt es keinen Server - "wartet auf Sync" laese sich dort wie
+    // ein Fehler, der sich nie aufloest.
+    val mode by graph.settings.mode.collectAsState(initial = null)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -191,6 +195,7 @@ fun SessionScreen(
             onDelete = { editRoundId?.let(viewModel::deleteRound) },
             lastChange = lastChange,
             onUndo = viewModel::undoLastChange,
+            showSync = mode == AppMode.CLUB,
             // Die Tastatur der Ramsch-Augen schiebt die Ergebnisleiste mit nach
             // oben, statt das zweite und dritte Feld zu verdecken. Das Fenster
             // selbst wird bei targetSdk 35 nicht mehr verkleinert.
@@ -250,6 +255,7 @@ internal fun SessionBody(
     modifier: Modifier = Modifier,
     lastChange: LastChange? = null,
     onUndo: () -> Unit = {},
+    showSync: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -302,6 +308,7 @@ internal fun SessionBody(
                 RoundHistory(
                     state = state,
                     names = names,
+                    showSync = showSync,
                     onEdit = onEditRound,
                 )
             }
@@ -408,6 +415,7 @@ private fun Scoreboard(state: SessionState, names: Map<Int, String>, modifier: M
 private fun RoundHistory(
     state: SessionState,
     names: Map<Int, String>,
+    showSync: Boolean,
     onEdit: (String) -> Unit,
 ) {
     val live = state.liveRounds
@@ -422,7 +430,7 @@ private fun RoundHistory(
             style = MaterialTheme.typography.titleSmall,
         )
         for ((index, round) in live.withIndex().reversed()) {
-            RoundRow(round = round, number = index + 1, names = names, editable = editable, onEdit = onEdit)
+            RoundRow(round = round, number = index + 1, names = names, editable = editable, showSync = showSync, onEdit = onEdit)
         }
     }
 }
@@ -433,6 +441,7 @@ private fun RoundRow(
     number: Int,
     names: Map<Int, String>,
     editable: Boolean,
+    showSync: Boolean,
     onEdit: (String) -> Unit,
 ) {
     val colors = MaterialTheme.scoreColors
@@ -469,7 +478,7 @@ private fun RoundRow(
                         append(names[subject] ?: "Platz ?")
                         append(" · ")
                         append(round.round.outcomeLabel())
-                        if (round.pendingSync) append(" · wartet auf Sync")
+                        if (showSync && round.pendingSync) append(" · wartet auf Sync")
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

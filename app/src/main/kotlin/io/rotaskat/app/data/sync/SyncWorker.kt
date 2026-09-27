@@ -118,6 +118,10 @@ class SyncWorker(
             )
         }
 
+        fun cancelPeriodic(context: Context) {
+            WorkManager.getInstance(context.applicationContext).cancelUniqueWork(PERIODIC_NAME)
+        }
+
         /** Der Ausloeser, den das Repository nach jeder Schreiboperation zieht. */
         fun trigger(context: Context): SyncTrigger {
             val appContext = context.applicationContext
