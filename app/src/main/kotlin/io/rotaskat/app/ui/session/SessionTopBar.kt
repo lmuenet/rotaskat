@@ -76,7 +76,10 @@ internal fun SessionTopBar(
                             leadingIcon = { Icon(painterResource(R.drawable.ic_swap_horiz), contentDescription = null) },
                             onClick = { menu = false; onChangeDealer() },
                         )
-                        HorizontalDivider()
+                        // Auf `surfaceContainerHigh` (dem Menuegrund) lag die
+                        // Trennlinie mit nur rund 1,1:1 Kontrast fast unsichtbar;
+                        // `outline` erreicht die geforderten 3:1 (F8).
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                         DropdownMenuItem(
                             text = { Text(if (empty) "Abend verwerfen …" else "Abend beenden …", color = gold) },
                             leadingIcon = {

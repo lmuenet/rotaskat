@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,10 @@ internal fun DealerSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        // Auf 360x800-Geraeten ist der Inhalt hoeher als die halbe
+        // Bildschirmhoehe; ohne das oeffnet das Sheet halb ausgeklappt und
+        // schneidet "Wer gibt?" ab.
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column(

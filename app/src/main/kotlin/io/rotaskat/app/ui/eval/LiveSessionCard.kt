@@ -14,6 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,14 +28,42 @@ import io.rotaskat.app.ui.theme.accentColors
 import io.rotaskat.app.ui.theme.scoreColors
 
 /**
+ * Ob die oberen beiden Plaetze der (absteigend sortierten) Rangliste
+ * gleichauf stehen. Gemeinsame Grundlage von [leaderLine] und [winnerLabel],
+ * damit die Gleichstandspruefung nur an einer Stelle steht.
+ */
+private fun topIsTied(sorted: List<Pair<String, Long>>): Boolean {
+    val first = sorted.getOrNull(0) ?: return false
+    val second = sorted.getOrNull(1) ?: return false
+    return second.second == first.second
+}
+
+/**
  * Wer vorne liegt, in Worten. Bei Gleichstand an der Spitze kein Name - ein
  * willkuerlich herausgegriffener Spieler waere eine falsche Aussage.
+ *
+ * "Noch keine Runde" gilt nur, solange tatsaechlich keine Runde gespielt
+ * wurde ([roundsPlayed]) - ein Alle-null-Stand nach gespielten Runden ist ein
+ * echter Gleichstand, keine leere Tabelle.
  */
-internal fun leaderLine(ranking: List<Pair<String, Long>>): String {
+internal fun leaderLine(ranking: List<Pair<String, Long>>, roundsPlayed: Boolean): String {
     val first = ranking.getOrNull(0) ?: return "Noch keine Runde"
-    if (ranking.all { it.second == 0L }) return "Noch keine Runde"
+    if (ranking.all { it.second == 0L }) {
+        return if (roundsPlayed) "Gleichstand" else "Noch keine Runde"
+    }
     val second = ranking.getOrNull(1)
     return if (second != null && second.second == first.second) "Gleichstand" else "${first.first} führt"
+}
+
+/**
+ * Wer den Abend gewonnen hat, in Worten. Bei Gleichstand an der Spitze kein
+ * Name - `maxByOrNull` griffe sonst willkuerlich einen der Gleichauf-Spieler
+ * heraus und benaennte ihn faelschlich als Sieger.
+ */
+internal fun winnerLabel(ranking: List<Pair<String, Long>>): String {
+    val sorted = ranking.sortedByDescending { it.second }
+    val first = sorted.getOrNull(0) ?: return "Gleichstand"
+    return if (topIsTied(sorted)) "Gleichstand" else first.first
 }
 
 /**
@@ -69,7 +99,11 @@ internal fun LiveSessionCard(
                     text = "♣ Abend läuft",
                     style = RotaskatTextStyles.sectionLabel,
                     color = colors.primary,
-                    modifier = Modifier.weight(1f),
+                    // Ohne das faende TalkBack im Kleeblatt ein eigenes,
+                    // unverstaendliches Zeichen zum Vorlesen.
+                    modifier = Modifier
+                        .weight(1f)
+                        .clearAndSetSemantics { contentDescription = "Abend läuft" },
                 )
                 Text(
                     text = "Runde ${state.liveRounds.size + 1} · seit ${formatTime(state.session.startedAt)}",
@@ -82,7 +116,7 @@ internal fun LiveSessionCard(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             ) {
                 Text(
-                    text = leaderLine(ranking),
+                    text = leaderLine(ranking, roundsPlayed = state.liveRounds.isNotEmpty()),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
                 )

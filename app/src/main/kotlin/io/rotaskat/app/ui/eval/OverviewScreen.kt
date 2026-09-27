@@ -62,9 +62,14 @@ fun OverviewScreen(
     val viewModel: EvaluationViewModel = viewModel(
         factory = remember(graph) { EvaluationViewModel.factory(graph) },
     )
-    val states by viewModel.states.collectAsState()
+    // Erst nach dem ersten geladenen Wert wissen wir, ob ein Abend laeuft.
+    // Ohne diese Unterscheidung von "noch nicht geladen" zeigte der leere
+    // Anfangswert von `states` den FAB kurz an, obwohl der versteckte Knopf
+    // die einzige Schranke gegen einen zweiten offenen Abend ist.
+    val states by viewModel.states.collectAsState(initial = null)
     val roster by viewModel.roster.collectAsState()
     val pending by viewModel.pendingSync.collectAsState()
+    val loaded = states != null
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -80,13 +85,13 @@ fun OverviewScreen(
         },
         floatingActionButton = {
             NewSessionFab(
-                running = states.any { it.session.status == SessionStatus.OPEN },
+                running = !loaded || states.orEmpty().any { it.session.status == SessionStatus.OPEN },
                 onClick = { actions.toNewSession() },
             )
         },
     ) { padding ->
-        val open = states.firstOrNull { it.session.status == SessionStatus.OPEN }
-        val closed = states.filter { it.session.status == SessionStatus.CLOSED }
+        val open = states.orEmpty().firstOrNull { it.session.status == SessionStatus.OPEN }
+        val closed = states.orEmpty().filter { it.session.status == SessionStatus.CLOSED }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -179,9 +184,11 @@ private fun PastSessionRow(
 ) {
     val colors = MaterialTheme.scoreColors
     val names = seatNames(state.session, roster)
-    val winner = (0 until state.session.seatCount)
+    val ranking = (0 until state.session.seatCount)
         .map { seat -> (names[seat] ?: "Platz ${seat + 1}") to (state.totals[seat] ?: 0L) }
-        .maxByOrNull { it.second }
+        .sortedByDescending { it.second }
+    val topPoints = ranking.firstOrNull()?.second
+    val winnerName = if (ranking.isNotEmpty()) winnerLabel(ranking) else null
     val rounds = state.liveRounds.size
     Column(
         modifier = Modifier
@@ -205,18 +212,18 @@ private fun PastSessionRow(
                     color = MaterialTheme.accentColors.labelMuted,
                 )
             }
-            if (winner != null) {
+            if (topPoints != null && winnerName != null) {
                 Text(
-                    text = winner.first + " ",
+                    text = winnerName + " ",
                     style = RotaskatTextStyles.compact,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatPoints(winner.second),
+                    text = formatPoints(topPoints),
                     style = RotaskatTextStyles.scoreMedium,
                     color = when {
-                        winner.second > 0 -> colors.gain
-                        winner.second < 0 -> colors.loss
+                        topPoints > 0 -> colors.gain
+                        topPoints < 0 -> colors.loss
                         else -> colors.neutral
                     },
                 )

@@ -1,6 +1,7 @@
 package io.rotaskat.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import org.junit.Test
 import kotlin.math.max
@@ -50,6 +51,11 @@ class PaletteContrastTest {
             "Gold-Button" to (scheme.onPrimary to scheme.primary),
             "Menue" to (scheme.onSurface to scheme.surfaceContainerHigh),
             "Gold im Menue" to (scheme.primary to scheme.surfaceContainerHigh),
+            // Der aussetzende Geber am Vierertisch (F2): Gold bei 60 % Deckkraft
+            // ueber dem Grund, gegen denselben Grund gemessen.
+            "gedimmter Geber auf Grund" to (
+                scheme.primary.copy(alpha = 0.6f).compositeOver(scheme.background) to scheme.background
+            ),
         ),
     )
 
@@ -61,6 +67,8 @@ class PaletteContrastTest {
             "Karo/Herz auf Kachel" to (accent.suitRed to scheme.surfaceContainer),
             "Pik/Kreuz auf Kachel" to (accent.suitBlack to scheme.surfaceContainer),
             "deaktivierter Umriss" to (accent.disabledOutline to scheme.background),
+            // Die Trennlinie vor "Abend beenden ..." im Menue (F8).
+            "Trennlinie im Menue" to (scheme.outline to scheme.surfaceContainerHigh),
         ),
     )
 }

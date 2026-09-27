@@ -239,7 +239,7 @@ dem Stand).
 - Pro Spalte: Name (Barlow Medium 16sp, `onSurfaceVariant`), darunter Punkte
   (26sp Bold, Gewinn/Verlust/neutral wie bisher, Vorzeichen immer).
 - Geber: Name in `primary` (Gold) mit kleinem Kartensymbol (`style`, 14 dp)
-  in der Namenszeile; am Vierertisch (setzt aus) zusaetzlich 55 % Deckkraft.
+  in der Namenszeile; am Vierertisch (setzt aus) zusaetzlich 60 % Deckkraft.
   Keine dritte Zeile: sie kostete ~18 dp, und genau die fehlten im
   Geraetetest fuer die Spitzen. Ohne "· gibt" kuerzt sich der Name nicht
   mehr. TalkBack liest "Lars, +0, gibt".

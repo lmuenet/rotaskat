@@ -477,7 +477,9 @@ private fun GameValueDisplay(draft: RoundDraft) {
             text = draft.derivation() ?: draft.missingHint(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
+            // Ueberreizt haengt "... ueberreizt auf X = Y" (plus Kontra-Zusatz)
+            // an die Herleitung an - zwei Zeilen schneiden sie dann ab.
+            maxLines = if (draft.effectiveOverbid) 3 else 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )

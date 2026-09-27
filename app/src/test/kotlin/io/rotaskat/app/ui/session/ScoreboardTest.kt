@@ -1,6 +1,7 @@
 package io.rotaskat.app.ui.session
 
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -52,6 +53,8 @@ class ScoreboardTest {
         }
         compose.onNodeWithContentDescription("Lars, +0, gibt", substring = true).performClick()
         assertEquals(1, opened)
+        // Nur die Geber-Spalte oeffnet die Geberwahl (F3).
+        compose.onNodeWithContentDescription("Anna, +48", substring = true).assertHasNoClickAction()
     }
 
     @Test
@@ -81,6 +84,9 @@ class ScoreboardTest {
         }
         compose.onNodeWithContentDescription("Ben, -12, gibt", substring = true).assertExists()
         compose.onNodeWithContentDescription("Lars, +0, gibt", substring = true).assertDoesNotExist()
+        // In der Korrektur ist onDealerClick null - auch die Geber-Spalte
+        // bleibt dann ohne Klickaktion (F3, pinnt onDealerClick = if (editing) null else onDealerClick).
+        compose.onNodeWithContentDescription("Ben, -12, gibt", substring = true).assertHasNoClickAction()
     }
 
     @Test

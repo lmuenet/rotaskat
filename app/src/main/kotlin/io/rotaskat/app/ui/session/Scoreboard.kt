@@ -79,7 +79,7 @@ internal fun Scoreboard(
                             }
                         }
                         .then(interaction)
-                        .alpha(if (sitsOut) 0.55f else 1f),
+                        .alpha(if (sitsOut) 0.6f else 1f),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
