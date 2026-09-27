@@ -1,5 +1,6 @@
 package io.rotaskat.app.ui.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import io.rotaskat.app.ui.eval.EvalScaffold
 import io.rotaskat.app.ui.eval.EvalSection
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.theme.RotaskatDimens
+import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.shared.model.Club
 import io.rotaskat.shared.model.Player
 
@@ -164,8 +166,9 @@ private fun RosterSection(
     ) {
         for (player in roster) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = RoundedCornerShape(RotaskatDimens.cardCorner),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
@@ -174,7 +177,7 @@ private fun RosterSection(
                 ) {
                     Text(
                         text = player.displayName,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = RotaskatTextStyles.compact,
                         modifier = Modifier.weight(1f),
                     )
                     if (local) {
@@ -210,7 +213,11 @@ private fun RosterSection(
                     keyboardActions = KeyboardActions(onDone = { submit() }),
                     modifier = Modifier.weight(1f),
                 )
-                Button(onClick = { submit() }, enabled = name.isNotBlank()) { Text("Hinzufügen") }
+                Button(
+                    onClick = { submit() },
+                    enabled = name.isNotBlank(),
+                    modifier = Modifier.heightIn(min = RotaskatDimens.tapTarget),
+                ) { Text("Hinzufügen") }
             }
         }
     }

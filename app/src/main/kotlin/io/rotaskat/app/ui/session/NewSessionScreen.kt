@@ -258,7 +258,7 @@ private fun PlayerRow(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(RotaskatDimens.tileCorner),
         color = if (takenSeat != null) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
