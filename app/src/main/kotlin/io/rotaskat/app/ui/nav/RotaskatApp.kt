@@ -1,5 +1,11 @@
 package io.rotaskat.app.ui.nav
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -8,7 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
@@ -89,12 +97,22 @@ private fun RotaskatNavHost(loaded: LoadedMode, modifier: Modifier) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
+    // Waehrend die Leiste ausblendet, ist `currentRoute` schon auf dem naechsten,
+    // nicht-obersten Ziel - ohne die zuletzt gueltige Route wuerde die Leiste
+    // beim Ausblenden auf kein Ziel mehr zeigen.
+    var lastTopLevel by remember { mutableStateOf(Routes.HOME) }
+    if (Routes.isTopLevel(currentRoute)) lastTopLevel = currentRoute!!
+
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (Routes.isTopLevel(currentRoute)) {
-                RotaskatBottomBar(currentRoute = currentRoute, onSelect = actions::toTopLevel)
+            AnimatedVisibility(
+                visible = Routes.isTopLevel(currentRoute),
+                enter = slideInVertically(tween(150)) { it } + fadeIn(tween(150)),
+                exit = slideOutVertically(tween(100)) { it } + fadeOut(tween(100)),
+            ) {
+                RotaskatBottomBar(currentRoute = lastTopLevel, onSelect = actions::toTopLevel)
             }
         },
     ) { padding ->

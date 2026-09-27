@@ -128,10 +128,6 @@ class RotaskatNavActions(private val navController: NavHostController) {
         restoreState = true
     }
 
-    fun toLeaderboard() = toTopLevel(Routes.LEADERBOARD)
-
-    fun toStats() = toTopLevel(Routes.STATS)
-
     fun toSettings() = navController.navigate(Routes.SETTINGS)
 
     /** Fluchtweg fuer Ziele, die diese Klasse noch nicht kennt. */

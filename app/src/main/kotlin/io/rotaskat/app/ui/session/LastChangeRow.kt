@@ -27,6 +27,7 @@ import io.rotaskat.app.R
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.common.formatPoints
 import io.rotaskat.app.ui.common.label
+import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.app.ui.theme.scoreColors
 import io.rotaskat.shared.scoring.Scoring
@@ -75,7 +76,7 @@ internal fun LastChangeRow(
     val colors = MaterialTheme.scoreColors
 
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(RotaskatDimens.tileCorner),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         // Feste Hoehe in beiden Zustaenden: nach "Zurueckgenommen" fehlt der
         // Knopf, und die Zeile wurde flacher - das Layout darunter sprang.

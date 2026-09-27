@@ -340,7 +340,7 @@ private fun ExtrasSection(
     ) {
         Surface(
             onClick = onToggle,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(RotaskatDimens.tileCorner),
             color = MaterialTheme.colorScheme.surfaceContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {

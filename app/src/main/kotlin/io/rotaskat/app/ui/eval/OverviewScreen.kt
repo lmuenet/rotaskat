@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -77,7 +78,7 @@ fun OverviewScreen(
             RotaskatTopBar(
                 title = "Rotaskat",
                 actions = {
-                    IconButton(onClick = { actions.toSettings() }) {
+                    IconButton(onClick = { actions.toSettings() }, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
                         Icon(Icons.Filled.Settings, contentDescription = "Einstellungen")
                     }
                 },
@@ -130,9 +131,10 @@ fun OverviewScreen(
 
             if (pending > 0) {
                 item(key = "pending") {
-                    Notice(
-                        "$pending ${if (pending == 1) "Runde wartet" else "Runden warten"} auf den " +
-                            "Server. Gespielt und gerechnet wird trotzdem - der Sync holt das nach.",
+                    Text(
+                        text = "$pending ${if (pending == 1) "Runde wartet" else "Runden warten"} auf den Server.",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.accentColors.labelMuted,
                         modifier = Modifier.padding(top = RotaskatDimens.itemSpacing),
                     )
                 }

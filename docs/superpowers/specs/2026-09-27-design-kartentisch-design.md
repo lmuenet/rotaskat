@@ -16,7 +16,8 @@ Tisch schneller lesbar. Messbar heisst das:
 - Kein Tap landet waehrend eines Bildschirmwechsels auf dem alten Bildschirm.
 - TalkBack liest den Auswahlzustand aller Kacheln vor.
 - Text und Bedienelemente erfuellen WCAG AA (4,5:1 Text, 3:1 grosse Schrift und
-  Bedienelement-Raender).
+  Bedienelement-Raender); Kacheln sind ueber Flaeche und Beschriftung erkennbar,
+  der 3:1-Rand gilt fuer den Auswahlrand.
 
 ## Getroffene Entscheidungen
 

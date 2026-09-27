@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
@@ -144,10 +145,10 @@ fun SettlementScreen(
  */
 @Composable
 internal fun RowScope.SettlementActions(onShare: () -> Unit, onHistory: () -> Unit) {
-    IconButton(onClick = onShare) {
+    IconButton(onClick = onShare, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
         Icon(Icons.Filled.Share, contentDescription = "Teilen")
     }
-    IconButton(onClick = onHistory) {
+    IconButton(onClick = onHistory, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
         Icon(painterResource(R.drawable.ic_show_chart), contentDescription = "Punkteverlauf")
     }
 }

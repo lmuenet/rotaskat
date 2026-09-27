@@ -107,7 +107,7 @@ fun EvalSection(
 @Composable
 fun Notice(text: String, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(RotaskatDimens.cardCorner),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = modifier.fillMaxWidth(),
     ) {

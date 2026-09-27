@@ -52,4 +52,19 @@ class BottomBarTest {
         compose.onNodeWithText("Abende").performClick()
         assertEquals(null, selected)
     }
+
+    @Test
+    fun `die Reihenfolge der Beschriftungen entspricht Routes_TOP_LEVEL`() {
+        compose.setContent {
+            RotaskatTheme { RotaskatBottomBar(currentRoute = Routes.HOME, onSelect = {}) }
+        }
+        val labelForRoute = mapOf(
+            Routes.HOME to "Abende",
+            Routes.LEADERBOARD to "Rangliste",
+            Routes.STATS to "Statistik",
+        )
+        val expected = Routes.TOP_LEVEL.map { labelForRoute.getValue(it) }
+        val actual = expected.sortedBy { compose.onNodeWithText(it).fetchSemanticsNode().positionInRoot.x }
+        assertEquals(expected, actual)
+    }
 }

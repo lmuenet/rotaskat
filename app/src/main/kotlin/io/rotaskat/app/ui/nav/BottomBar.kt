@@ -19,11 +19,14 @@ private data class TopLevelDestination(
     @DrawableRes val icon: Int,
 )
 
-private val TopLevelDestinations = listOf(
-    TopLevelDestination(Routes.HOME, "Abende", R.drawable.ic_style),
-    TopLevelDestination(Routes.LEADERBOARD, "Rangliste", R.drawable.ic_emoji_events),
-    TopLevelDestination(Routes.STATS, "Statistik", R.drawable.ic_bar_chart),
-)
+private val TopLevelDestinations = Routes.TOP_LEVEL.map { route ->
+    when (route) {
+        Routes.HOME -> TopLevelDestination(route, "Abende", R.drawable.ic_style)
+        Routes.LEADERBOARD -> TopLevelDestination(route, "Rangliste", R.drawable.ic_emoji_events)
+        Routes.STATS -> TopLevelDestination(route, "Statistik", R.drawable.ic_bar_chart)
+        else -> error("Unbekanntes Tab-Ziel $route")
+    }
+}
 
 /**
  * Die untere Leiste: Abende, Rangliste, Statistik.

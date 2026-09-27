@@ -159,6 +159,7 @@ fun SessionScreen(
                 open = state?.session?.status == SessionStatus.OPEN,
                 editing = editRoundId != null,
                 empty = empty,
+                loading = state == null,
                 onBack = { actions.back() },
                 onHistory = { actions.toHistory(sessionId) },
                 onSettlement = { actions.toSettlement(sessionId) },
@@ -451,7 +452,7 @@ private fun RoundRow(
     Surface(
         onClick = { onEdit(round.id) },
         enabled = editable,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(RotaskatDimens.tileCorner),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
     ) {

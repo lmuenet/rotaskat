@@ -3,6 +3,7 @@ package io.rotaskat.app.ui.eval
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +25,7 @@ import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatDate
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.seatNames
+import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.seriesStyleFor
 import io.rotaskat.shared.model.Player
 
@@ -55,7 +57,10 @@ fun ProgressScreen(
         modifier = modifier,
         actions = {
             if (current != null) {
-                IconButton(onClick = { actions.toSettlement(sessionId) }) {
+                IconButton(
+                    onClick = { actions.toSettlement(sessionId) },
+                    modifier = Modifier.size(RotaskatDimens.tapTarget),
+                ) {
                     Icon(painterResource(R.drawable.ic_euro), contentDescription = "Abrechnung")
                 }
             }

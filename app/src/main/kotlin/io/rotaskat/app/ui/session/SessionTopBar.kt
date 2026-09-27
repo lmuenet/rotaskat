@@ -1,6 +1,7 @@
 package io.rotaskat.app.ui.session
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -15,9 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import io.rotaskat.app.R
 import io.rotaskat.app.ui.common.RotaskatTopBar
+import io.rotaskat.app.ui.theme.RotaskatDimens
 
 /**
  * Kopfzeile des Abends.
@@ -38,6 +41,7 @@ internal fun SessionTopBar(
     onSettlement: () -> Unit,
     onChangeDealer: () -> Unit,
     onEnd: () -> Unit,
+    loading: Boolean = false,
 ) {
     var menu by remember { mutableStateOf(false) }
     val gold = MaterialTheme.colorScheme.primary
@@ -45,14 +49,14 @@ internal fun SessionTopBar(
         title = title,
         onBack = onBack,
         actions = {
-            if (editing) return@RotaskatTopBar
+            if (editing || loading) return@RotaskatTopBar
             if (!open) {
-                IconButton(onClick = onSettlement) {
+                IconButton(onClick = onSettlement, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
                     Icon(painterResource(R.drawable.ic_euro), contentDescription = "Abrechnung")
                 }
             }
             Box {
-                IconButton(onClick = { menu = true }) {
+                IconButton(onClick = { menu = true }, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
                     Icon(Icons.Filled.MoreVert, contentDescription = "Weitere Optionen")
                 }
                 DropdownMenu(

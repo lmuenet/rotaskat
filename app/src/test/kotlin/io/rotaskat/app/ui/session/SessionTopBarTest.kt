@@ -26,7 +26,7 @@ class SessionTopBarTest {
     private var ended = 0
     private var settlement = 0
 
-    private fun show(open: Boolean, editing: Boolean = false, empty: Boolean = false) {
+    private fun show(open: Boolean, editing: Boolean = false, empty: Boolean = false, loading: Boolean = false) {
         compose.setContent {
             RotaskatTheme {
                 SessionTopBar(
@@ -34,6 +34,7 @@ class SessionTopBarTest {
                     open = open,
                     editing = editing,
                     empty = empty,
+                    loading = loading,
                     onBack = {},
                     onHistory = {},
                     onSettlement = { settlement++ },
@@ -74,6 +75,13 @@ class SessionTopBarTest {
     @Test
     fun `in der Korrektur gibt es kein Menue`() {
         show(open = true, editing = true)
+        compose.onNodeWithContentDescription("Weitere Optionen").assertDoesNotExist()
+    }
+
+    @Test
+    fun `waehrend des Ladens keine Aktionen`() {
+        show(open = false, loading = true)
+        compose.onNodeWithContentDescription("Abrechnung").assertDoesNotExist()
         compose.onNodeWithContentDescription("Weitere Optionen").assertDoesNotExist()
     }
 

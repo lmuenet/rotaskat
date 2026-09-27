@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 /**
  * Die Kopfzeile der Abrechnung zeigt Icons statt Textknoepfe: Teilen und
  * Punkteverlauf. Beide muessen ueber ihre contentDescription auffindbar sein
- * (Screenreader) und ihren jeweiligen Callback auslösen.
+ * (Screenreader) und ihren jeweiligen Callback ausloesen.
  */
 @RunWith(RobolectricTestRunner::class)
 class SettlementHeaderTest {
