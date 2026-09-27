@@ -219,6 +219,7 @@ class SessionMessageTest {
 
         override suspend fun endSession(sessionId: String, endedAt: Instant) = error("Im Test nicht benutzt")
         override suspend fun reopenSession(sessionId: String) = error("Im Test nicht benutzt")
+        override suspend fun discardSession(sessionId: String, at: Instant) = error("Im Test nicht benutzt")
         override suspend fun setDealer(sessionId: String, dealerSeat: Int) = error("Im Test nicht benutzt")
     }
 

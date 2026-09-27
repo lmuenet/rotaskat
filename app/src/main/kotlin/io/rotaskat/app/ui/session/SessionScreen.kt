@@ -100,6 +100,7 @@ fun SessionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var confirmEnd by rememberSaveable { mutableStateOf(false) }
+    val empty = state?.liveRounds?.isEmpty() == true
 
     // Ein ausgegangener Bildschirm kostet zwischen zwei Runden mehr Zeit als die
     // gesamte Eingabe. Deshalb bleibt er an, solange der Abend laeuft - und nur
@@ -136,6 +137,11 @@ fun SessionScreen(
                 actions.toSettlementAfterEnd(sessionId)
             }
 
+            SessionMessage.Discarded -> {
+                viewModel.consumeMessage()
+                actions.toHome()
+            }
+
             is SessionMessage.Failed -> {
                 haptics.failure()
                 viewModel.consumeMessage()
@@ -158,7 +164,9 @@ fun SessionScreen(
                 actions = {
                     if (editRoundId == null) {
                         if (state?.session?.status == SessionStatus.OPEN) {
-                            TextButton(onClick = { confirmEnd = true }) { Text("Abend beenden") }
+                            TextButton(onClick = { confirmEnd = true }) {
+                                Text(if (empty) "Abend verwerfen" else "Abend beenden")
+                            }
                         } else if (state != null) {
                             // Der Weg, den der Abend tatsaechlich nimmt: beenden,
                             // dann sofort abrechnen. Ohne diesen Knopf fuehrte er
@@ -211,20 +219,29 @@ fun SessionScreen(
         // passiert genau einmal pro Abend, ist nur ueber die Abrechnung umkehrbar und
         // liegt in der Kopfzeile direkt neben nichts. Alle Rueckfragen, die
         // dreissigmal am Abend kaemen, gibt es dagegen nicht.
+        //
+        // Ohne eine einzige Runde gibt es nichts abzurechnen. Ein solcher Abend
+        // entsteht durch eine vertippte Sitzordnung oder zum Ausprobieren und
+        // blieb frueher fuer immer als "0 Runden" in der Uebersicht stehen.
         AlertDialog(
             onDismissRequest = { confirmEnd = false },
-            title = { Text("Abend beenden?") },
+            title = { Text(if (empty) "Abend verwerfen?" else "Abend beenden?") },
             text = {
                 Text(
-                    "Danach geht es direkt zur Abrechnung. Wer dort noch einen Fehler " +
-                        "findet, kann den Abend wieder öffnen.",
+                    if (empty) {
+                        "Es wurde noch keine Runde gespielt. Der Abend verschwindet ganz – " +
+                            "bei falscher Sitzordnung danach einfach neu anlegen."
+                    } else {
+                        "Danach geht es direkt zur Abrechnung. Wer dort noch einen Fehler " +
+                            "findet, kann den Abend wieder öffnen."
+                    },
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirmEnd = false
-                    viewModel.endSession()
-                }) { Text("Beenden") }
+                    if (empty) viewModel.discardSession() else viewModel.endSession()
+                }) { Text(if (empty) "Verwerfen" else "Beenden") }
             },
             dismissButton = {
                 TextButton(onClick = { confirmEnd = false }) { Text("Weiterspielen") }

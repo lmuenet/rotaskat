@@ -43,6 +43,9 @@ sealed interface SessionMessage {
     /** Der Abend ist beendet, weiter geht es in die Abrechnung. */
     data object Ended : SessionMessage
 
+    /** Der Abend ohne Runden ist verworfen und existiert nicht mehr. */
+    data object Discarded : SessionMessage
+
     data class Failed(val text: String) : SessionMessage
 }
 
@@ -263,6 +266,14 @@ class SessionViewModel(
         viewModelScope.launch {
             runCatching { repository.endSession(sessionId) }
                 .onSuccess { _message.value = SessionMessage.Ended }
+                .onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }
+        }
+    }
+
+    fun discardSession() {
+        viewModelScope.launch {
+            runCatching { repository.discardSession(sessionId) }
+                .onSuccess { _message.value = SessionMessage.Discarded }
                 .onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }
         }
     }

@@ -161,6 +161,14 @@ interface RotaskatRepository {
      */
     suspend fun reopenSession(sessionId: String)
 
+    /**
+     * Verwirft einen Abend ohne eine einzige lebende Runde - etwa nach einer
+     * vertippten Sitzordnung. Ein Tombstone, kein physisches Loeschen: der Sync
+     * muss den Abend auch auf dem Server verschwinden lassen. Scheitert, sobald
+     * eine Runde gespielt ist; die bleibt dann Teil der Historie.
+     */
+    suspend fun discardSession(sessionId: String, at: Instant = Clock.System.now())
+
     /** Ein Tap korrigiert die automatisch fortgeschriebene Rotation. */
     suspend fun setDealer(sessionId: String, dealerSeat: Int)
 

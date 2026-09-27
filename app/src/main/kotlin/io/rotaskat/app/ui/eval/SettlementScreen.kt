@@ -93,39 +93,54 @@ fun SettlementScreen(
         SettlementBody(state = current, names = names)
 
         if (current.session.status == SessionStatus.CLOSED) {
-            ReopenSection(
-                onReopen = {
-                    graph.repository.reopenSession(sessionId)
-                    actions.toSessionAfterReopen(sessionId)
-                },
-            )
+            if (current.liveRounds.isEmpty()) {
+                // Ein beendeter Abend ohne Runde ist ein Versehen, kein Spielabend.
+                // Frueher blieb er dauerhaft als "0 Runden" in der Uebersicht.
+                SessionActionSection(
+                    label = "Abend verwerfen",
+                    hint = "Dieser Abend hat keine einzige Runde und verschwindet damit aus der Übersicht.",
+                    onAction = {
+                        graph.repository.discardSession(sessionId)
+                        actions.toHome()
+                    },
+                )
+            } else {
+                SessionActionSection(
+                    label = "Abend wieder öffnen",
+                    hint = "Zum Korrigieren einer Runde. Danach läuft der Abend weiter, bis er erneut beendet wird.",
+                    onAction = {
+                        graph.repository.reopenSession(sessionId)
+                        actions.toSessionAfterReopen(sessionId)
+                    },
+                )
+            }
         }
     }
 }
 
 /**
- * Der Weg zurueck in einen beendeten Abend.
+ * Was mit einem beendeten Abend noch geht: wieder oeffnen oder, ohne eine
+ * einzige Runde, verwerfen.
  *
  * Ein Tippfehler faellt am Tisch typischerweise erst beim Bezahlen auf, also
  * genau hier. Ohne diesen Weg liesse er sich nicht mehr korrigieren. Bewusst
- * klein und am Ende: die Abrechnung ist der Normalfall, das Wiederoeffnen die
- * Ausnahme.
+ * klein und am Ende: die Abrechnung ist der Normalfall, das hier die Ausnahme.
  */
 @Composable
-private fun ReopenSection(onReopen: suspend () -> Unit) {
+private fun SessionActionSection(label: String, hint: String, onAction: suspend () -> Unit) {
     val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
         OutlinedButton(
             onClick = {
                 scope.launch {
-                    error = runCatching { onReopen() }.exceptionOrNull()?.message
+                    error = runCatching { onAction() }.exceptionOrNull()?.message
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Abend wieder öffnen") }
+        ) { Text(label) }
         Text(
-            text = error ?: "Zum Korrigieren einer Runde. Danach läuft der Abend weiter, bis er erneut beendet wird.",
+            text = error ?: hint,
             style = MaterialTheme.typography.bodySmall,
             color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
         )

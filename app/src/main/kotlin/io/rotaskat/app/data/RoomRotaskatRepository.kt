@@ -227,6 +227,24 @@ class RoomRotaskatRepository(
         syncTrigger.requestSync()
     }
 
+    override suspend fun discardSession(sessionId: String, at: Instant) {
+        database.withTransaction {
+            val entity = sessionDao.find(sessionId) ?: return@withTransaction
+            if (entity.deletedAt != null) return@withTransaction
+            check(roundDao.countLive(sessionId) == 0) {
+                "Ein Abend mit Runden lässt sich nicht verwerfen."
+            }
+            bumpSession(
+                entity.copy(
+                    status = SessionStatus.CLOSED,
+                    endedAt = entity.endedAt ?: at,
+                    deletedAt = at,
+                ),
+            )
+        }
+        syncTrigger.requestSync()
+    }
+
     override suspend fun setDealer(sessionId: String, dealerSeat: Int) {
         database.withTransaction {
             val entity = sessionDao.find(sessionId) ?: return@withTransaction

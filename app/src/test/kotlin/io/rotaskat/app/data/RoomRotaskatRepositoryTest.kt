@@ -223,6 +223,34 @@ class RoomRotaskatRepositoryTest {
         assertEquals(SessionStatus.CLOSED, assertNotNull(repository.session(first)).session.status)
     }
 
+    /**
+     * Ein Abend ohne Runde - vertippte Sitzordnung, nur ausprobiert - blieb
+     * frueher fuer immer als "0 Runden" in der Uebersicht stehen.
+     */
+    @Test
+    fun `Ein Abend ohne Runden laesst sich verwerfen`() = runTest {
+        val sessionId = startEvening()
+        syncRequests = 0
+
+        repository.discardSession(sessionId, at = T0)
+
+        assertNull(repository.observeOpenSession().first())
+        assertTrue(repository.observeSessions().first().none { it.session.id == sessionId })
+        val entity = assertNotNull(database.sessionDao().find(sessionId))
+        assertEquals(T0, entity.deletedAt, "Tombstone statt physischem Loeschen, damit der Sync ihn mitnimmt")
+        assertTrue(entity.pendingSync)
+        assertEquals(1, syncRequests)
+    }
+
+    @Test
+    fun `Ein Abend mit Runden wird nicht verworfen`() = runTest {
+        val sessionId = startEvening()
+        repository.recordRound(sessionId, suitRound(repository.newRoundId(), dealerSeat = 0, declarerSeat = 1))
+
+        assertFailsWith<IllegalStateException> { repository.discardSession(sessionId, at = T0) }
+        assertNull(assertNotNull(database.sessionDao().find(sessionId)).deletedAt)
+    }
+
     @Test
     fun `Eine strukturell ungueltige Runde wird gar nicht erst gespeichert`() = runTest {
         val sessionId = startEvening()
