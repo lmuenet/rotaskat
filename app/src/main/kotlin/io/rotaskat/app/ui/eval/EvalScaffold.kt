@@ -162,7 +162,9 @@ fun StatTile(
                 text = label,
                 style = RotaskatTextStyles.sectionLabel,
                 color = MaterialTheme.accentColors.labelMuted,
-                maxLines = 1,
+                // Zwei Zeilen statt einer mit Ellipse: ein langes Label bricht
+                // um, statt in der Mitte des Worts abgeschnitten zu werden.
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = if (labelDescription != null) {
                     Modifier.semantics { contentDescription = labelDescription }
@@ -174,11 +176,15 @@ fun StatTile(
                 if (icon != null) {
                     Icon(painterResource(icon), contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
                 }
+                // Ein langer Wert (etwa ein ausgeschriebener Spielname) passt bei
+                // scoreLarge nicht in eine Zeile - kleinere Schrift und eine
+                // zweite Zeile zeigen ihn ganz, statt ihn abzuschneiden.
+                val valueIsLong = value.length > 12
                 Text(
                     text = value,
-                    style = RotaskatTextStyles.scoreLarge,
+                    style = if (valueIsLong) RotaskatTextStyles.scoreMedium else RotaskatTextStyles.scoreLarge,
                     color = if (valueColor == Color.Unspecified) colors.onSurface else valueColor,
-                    maxLines = 1,
+                    maxLines = if (valueIsLong) 2 else 1,
                     overflow = TextOverflow.Ellipsis,
                     // Ein Gedankenstrich ist fuer sehende Augen "keine Quote" -
                     // vorgelesen waere er sonst ein Minuszeichen ohne Zahl.
