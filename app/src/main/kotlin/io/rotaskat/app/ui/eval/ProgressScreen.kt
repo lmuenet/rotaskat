@@ -4,16 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.rotaskat.app.R
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.StandingRow
@@ -53,7 +55,9 @@ fun ProgressScreen(
         modifier = modifier,
         actions = {
             if (current != null) {
-                TextButton(onClick = { actions.toSettlement(sessionId) }) { Text("Abrechnung") }
+                IconButton(onClick = { actions.toSettlement(sessionId) }) {
+                    Icon(painterResource(R.drawable.ic_euro), contentDescription = "Abrechnung")
+                }
             }
         },
     ) {
@@ -66,13 +70,8 @@ fun ProgressScreen(
 
         val series = remember(current, roster) { seriesOf(current, roster) }
 
-        EvalSection(
-            title = "Verlauf",
-            subtitle = "Waagerecht die Runden, senkrecht der laufende Stand in Punkten. " +
-                "Die Nulllinie ist stärker gezeichnet.",
-        ) {
+        EvalSection(title = "Verlauf") {
             PointsChart(series = series)
-            ChartLegend(series = series, modifier = Modifier.padding(top = 8.dp))
         }
 
         EvalSection(title = "Stand", subtitle = counted(current.liveRounds.size, "Runde", "Runden")) {

@@ -1,27 +1,28 @@
 package io.rotaskat.app.ui.eval
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatPoints
 import io.rotaskat.app.ui.theme.SeriesStyle
 import kotlin.math.ceil
@@ -44,27 +45,25 @@ data class ChartSeries(
 /**
  * Der Punkteverlauf eines Abends.
  *
- * Selbst gezeichnet, ohne Diagrammbibliothek. Vier Linien ueber dreissig Punkte
- * sind kein Grund fuer eine Abhaengigkeit, die eigene Themes, eigene
- * Animationen und eine eigene Vorstellung von Barrierefreiheit mitbringt - und
- * die man dann doch wieder ueberschreibt.
+ * Selbst gezeichnet, ohne Diagrammbibliothek. Jede Linie traegt ihren Namen
+ * und den Stand am Ende - eine Legende darunter zwang dazu, zwischen Farbe und
+ * Name hin und her zu sehen, und eine Farbe allein ist bei Rot-Gruen-Schwaeche
+ * keine Zuordnung.
  *
- * Keine Farbe steht in dieser Datei: Raster, Nulllinie und Beschriftung kommen
- * aus dem Farbschema, die Linien aus [io.rotaskat.app.ui.theme.RotaskatSeriesStyles].
- * Ein anderes Schema - auch ein helles - aendert das Diagramm mit, ohne dass
- * hier eine Zeile angefasst werden muss.
+ * Keine Farbe steht in dieser Datei: Raster und Achsen kommen aus dem
+ * Farbschema, die Linien aus [io.rotaskat.app.ui.theme.RotaskatSeriesStyles].
  */
 @Composable
 fun PointsChart(
     series: List<ChartSeries>,
     modifier: Modifier = Modifier,
-    height: Dp = 240.dp,
+    height: Dp = 260.dp,
 ) {
     val values = series.flatMap { it.cumulative }
     val roundCount = (series.maxOfOrNull { it.cumulative.size } ?: 0) - 1
     if (series.isEmpty() || roundCount < 1) {
         Text(
-            text = "Noch keine Runde gespielt - es gibt noch nichts zu zeichnen.",
+            text = "Noch keine Runde gespielt.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = modifier,
@@ -73,25 +72,44 @@ fun PointsChart(
     }
 
     val measurer = rememberTextMeasurer()
-    val axisStyle = MaterialTheme.typography.labelSmall.copy(
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    val axisStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val endStyle = MaterialTheme.typography.labelLarge
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val zeroColor = MaterialTheme.colorScheme.outline
     val scale = chartScale(values)
+    val summary = chartSummary(series)
 
-    Canvas(modifier.fillMaxWidth().height(height)) {
-        val labels = scale.lines.map { formatPoints(it) }
-        val labelWidths = labels.map { measurer.measure(AnnotatedString(it), axisStyle).size }
-        val labelHeight = labelWidths.maxOf { it.height }.toFloat()
-        val axisWidth = labelWidths.maxOf { it.width }.toFloat()
+    Canvas(
+        modifier
+            .fillMaxWidth()
+            .height(height)
+            .semantics { contentDescription = summary },
+    ) {
+        val axisLabels = scale.lines.map { formatPoints(it) }
+        val axisSizes = axisLabels.map { measurer.measure(AnnotatedString(it), axisStyle).size }
+        val axisLabelHeight = axisSizes.maxOf { it.height }.toFloat()
+        val axisWidth = axisSizes.maxOf { it.width }.toFloat()
+        val axisTitle = measurer.measure(AnnotatedString("Runde"), axisStyle)
+
+        // Beschriftungen am Linienende. Hoechstens 45 % der Breite, sonst
+        // bliebe fuer das Diagramm selbst nichts - lange Namen werden gekuerzt.
+        val maxEndWidth = (size.width * 0.45f).toInt()
+        val endLayouts = series.map { line ->
+            measurer.measure(
+                text = AnnotatedString("${line.label} ${formatPoints(line.cumulative.last())}"),
+                style = endStyle.copy(color = line.style.color),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                constraints = Constraints(maxWidth = maxEndWidth),
+            )
+        }
+        val endWidth = endLayouts.maxOf { it.size.width }.toFloat()
+        val endHeight = endLayouts.maxOf { it.size.height }.toFloat()
 
         val leftPadding = axisWidth + 8.dp.toPx()
-        val bottomPadding = labelHeight + 8.dp.toPx()
-        val topPadding = labelHeight / 2f
-        // Rechts bleibt Platz, damit der letzte Messpunkt nicht halb an der
-        // Kante klebt - er ist der interessanteste des ganzen Diagramms.
-        val rightPadding = 6.dp.toPx()
+        val rightPadding = endWidth + 14.dp.toPx()
+        val topPadding = maxOf(axisLabelHeight, endHeight) / 2f
+        val bottomPadding = axisLabelHeight + 6.dp.toPx() + axisTitle.size.height + 2.dp.toPx()
 
         val plotWidth = size.width - leftPadding - rightPadding
         val plotHeight = size.height - topPadding - bottomPadding
@@ -111,20 +129,15 @@ fun PointsChart(
                 end = Offset(leftPadding + plotWidth, yPosition),
                 strokeWidth = if (line == 0L) 1.5.dp.toPx() else 1.dp.toPx(),
             )
-            val text = labels[index]
-            val measured = measurer.measure(AnnotatedString(text), axisStyle)
+            val measured = measurer.measure(AnnotatedString(axisLabels[index]), axisStyle)
             drawText(
                 textLayoutResult = measured,
-                topLeft = Offset(
-                    x = leftPadding - 6.dp.toPx() - measured.size.width,
-                    y = yPosition - measured.size.height / 2f,
-                ),
+                topLeft = Offset(leftPadding - 6.dp.toPx() - measured.size.width, yPosition - measured.size.height / 2f),
             )
         }
 
         // Nicht jede Runde beschriften: bei dreissig Runden stehen die Zahlen
-        // sonst uebereinander. Der Schritt richtet sich nach dem Platz, den eine
-        // Beschriftung tatsaechlich braucht.
+        // sonst uebereinander.
         val stepWidth = measurer.measure(AnnotatedString("00"), axisStyle).size.width * 2.2f
         val labelStep = maxOf(1, ceil(roundCount * stepWidth / plotWidth).toInt())
         var round = 0
@@ -139,13 +152,19 @@ fun PointsChart(
             drawText(
                 textLayoutResult = measured,
                 topLeft = Offset(
-                    x = (x(round) - measured.size.width / 2f)
-                        .coerceIn(0f, size.width - measured.size.width),
+                    x = (x(round) - measured.size.width / 2f).coerceIn(0f, size.width - measured.size.width),
                     y = topPadding + plotHeight + 6.dp.toPx(),
                 ),
             )
             round += labelStep
         }
+        drawText(
+            textLayoutResult = axisTitle,
+            topLeft = Offset(
+                x = leftPadding + plotWidth - axisTitle.size.width,
+                y = topPadding + plotHeight + 6.dp.toPx() + axisLabelHeight + 2.dp.toPx(),
+            ),
+        )
 
         for (line in series) {
             val path = Path()
@@ -156,52 +175,66 @@ fun PointsChart(
             drawPath(
                 path = path,
                 color = line.style.color,
-                style = Stroke(width = 2.5.dp.toPx()),
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
             val last = line.cumulative.lastIndex
-            drawCircle(
-                color = line.style.color,
-                radius = 3.5.dp.toPx(),
-                center = Offset(x(last), y(line.cumulative[last])),
-            )
+            drawCircle(color = line.style.color, radius = 4.5.dp.toPx(), center = Offset(x(last), y(line.cumulative[last])))
+        }
+
+        val desired = series.map { y(it.cumulative.last()) }
+        val placed = labelPositions(desired, minGap = endHeight, top = topPadding, bottom = topPadding + plotHeight)
+        val labelX = leftPadding + plotWidth + 10.dp.toPx()
+        series.forEachIndexed { index, line ->
+            val endX = x(line.cumulative.lastIndex)
+            if (kotlin.math.abs(placed[index] - desired[index]) > 1f) {
+                drawLine(
+                    color = line.style.color.copy(alpha = 0.5f),
+                    start = Offset(endX + 4.5.dp.toPx(), desired[index]),
+                    end = Offset(labelX - 2.dp.toPx(), placed[index]),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            }
+            val layout = endLayouts[index]
+            drawText(textLayoutResult = layout, topLeft = Offset(labelX, placed[index] - layout.size.height / 2f))
         }
     }
 }
 
+/** Was TalkBack statt des Bildes vorliest: der Stand, nach Punkten sortiert. */
+internal fun chartSummary(series: List<ChartSeries>): String {
+    val rounds = (series.maxOfOrNull { it.cumulative.size } ?: 1) - 1
+    val standings = series
+        .sortedByDescending { it.cumulative.last() }
+        .joinToString(", ") { "${it.label} ${formatPoints(it.cumulative.last())}" }
+    return "Punkteverlauf über ${counted(rounds, "Runde", "Runden")}: $standings"
+}
+
 /**
- * Die Legende.
+ * Verteilt Beschriftungen senkrecht, sodass keine zwei naeher als [minGap]
+ * beieinanderliegen und alle zwischen [top] und [bottom] bleiben.
  *
- * Sie zeigt das Strichmuster mit, nicht nur die Farbe - dieselbe Ueberlegung wie
- * beim Vorzeichen an jeder Punktzahl: eine Zuordnung, die allein an der Farbe
- * haengt, ist bei Rot-Gruen-Schwaeche keine.
+ * Die Reihenfolge der Wunschpositionen bleibt erhalten - die oberste Linie hat
+ * auch die oberste Beschriftung. Erst wird von oben nach unten Platz gemacht,
+ * dann vom unteren Rand her zurueckgeschoben. Liegen die Wunschpositionen
+ * weit genug auseinander, bewegt sich nichts.
  */
-@Composable
-fun ChartLegend(series: List<ChartSeries>, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        for (line in series) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Canvas(Modifier.size(width = 34.dp, height = 12.dp)) {
-                    drawLine(
-                        color = line.style.color,
-                        start = Offset(0f, size.height / 2f),
-                        end = Offset(size.width, size.height / 2f),
-                        strokeWidth = 2.5.dp.toPx(),
-                    )
-                }
-                Text(
-                    text = line.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 10.dp),
-                )
-                Text(
-                    text = formatPoints(line.cumulative.lastOrNull() ?: 0L),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-        }
+internal fun labelPositions(desired: List<Float>, minGap: Float, top: Float, bottom: Float): List<Float> {
+    if (desired.isEmpty()) return emptyList()
+    val order = desired.indices.sortedBy { desired[it] }
+    val placed = FloatArray(desired.size)
+    var previous = Float.NEGATIVE_INFINITY
+    for (index in order) {
+        val y = maxOf(desired[index].coerceIn(top, bottom), previous + minGap)
+        placed[index] = y
+        previous = y
     }
+    var next = Float.POSITIVE_INFINITY
+    for (index in order.reversed()) {
+        val y = minOf(placed[index], next - minGap, bottom)
+        placed[index] = y
+        next = y
+    }
+    return placed.toList()
 }
 
 /**
