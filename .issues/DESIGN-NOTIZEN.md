@@ -87,3 +87,31 @@ stehen in den nummerierten Issues.
   „Kneipenmodus“ mit maximalem Kontrast wäre eine eigene Variante.
 - Querformat: nicht getestet. Das Handy liegt am Tisch oft quer oder flach.
 - Tablet-Layout: nicht getestet.
+
+## Nachtrag nach der Fix-Runde (Gerätetest 27.09.2026, 12:40)
+
+Funktional auf dem Pixel bestätigt: #001–#012 und „Abrechnung teilen“. Beim
+Test gefunden und behoben: ein geleertes, automatisch ergänztes Ramsch-Feld
+wurde sofort wieder aufgefüllt (Commit 50c3dce).
+
+Für das Redesign aufgefallen:
+
+- **Taps während der Übergänge landen auf dem alten Bildschirm.** Ein Tap aufs
+  Zahnrad kurz nach „Zurück“ öffnete noch den Dialog „Abend beenden?“ des
+  verlassenen Abends. Crossfades verkürzen oder Eingaben während der
+  Transition sperren.
+- **Abgeschnittene Namen:** „Joha… · gibt“ im Stand, „Gespeichert: Johannes ·
+  K…“ in der Undo-Zeile. Stand und Undo-Zeile brauchen eine Form, in der
+  Namen bis ~10 Zeichen ganz stehen.
+- **Herleitung der Wertkarte** wird bei Ouvert nach drei Zeilen abgeschnitten
+  – ausgerechnet „= 12 x 9 = 108“ fehlt. Kürzere Form, z. B. „Kreuz mit 2 ·
+  Ouvert (inkl. Hand, Schneider, Schwarz) = 12 × 9“.
+- **„durch die Ansage gesetzt“** ist auf „durch die“ gekürzt (zu schmale Kacheln).
+- **Geberauswahl** klappt als zweite, fast identische Namensreihe direkt über
+  der Alleinspieler-Reihe auf – verwechselbar. Eigene Form (Chips, Sheet,
+  Sitzring) oder deutlich abgesetzt.
+- **Undo-Zeile nach „Zurückgenommen“** wird ohne Knopf flacher, das Layout
+  darunter springt.
+- **Korrekturmodus:** Der Stand oben zeigt die aktuelle Rotation („Lars ·
+  gibt“), die Runde hatte einen anderen Geber.
+- **TalkBack:** Kacheln melden weiterhin kein `selected` (siehe oben).
