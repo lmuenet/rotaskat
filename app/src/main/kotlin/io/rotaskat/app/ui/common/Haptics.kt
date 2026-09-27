@@ -29,7 +29,14 @@ import androidx.compose.ui.platform.LocalContext
  *  - [failure] langer Puls, wenn eine Eingabe abgelehnt wurde
  */
 @Stable
-class RotaskatHaptics(private val vibrator: Vibrator?) {
+class RotaskatHaptics internal constructor(private val output: Output?) {
+
+    constructor(vibrator: Vibrator?) : this(vibrator?.let(::VibratorOutput))
+
+    /** Wohin ein Muster geht. Eigene Schnittstelle, damit Tests ein Geraet ohne Berechtigung nachstellen koennen. */
+    internal fun interface Output {
+        fun play(timings: LongArray)
+    }
 
     fun select() = play(SELECT)
 
@@ -38,12 +45,27 @@ class RotaskatHaptics(private val vibrator: Vibrator?) {
     fun failure() = play(FAILURE)
 
     private fun play(timings: LongArray) {
-        val device = vibrator ?: return
-        if (!device.hasVibrator()) return
-        // createWaveform statt der einfachen Dauer, weil nur so der Doppelpuls
-        // als EIN Effekt ankommt. Zwei Einzelaufrufe kurz nacheinander werden
-        // vom System zusammengezogen und sind vom Klick nicht zu unterscheiden.
-        device.vibrate(VibrationEffect.createWaveform(timings, NO_REPEAT))
+        val device = output ?: return
+        // Die Haptik darf die Eingabe nie mitreissen. Fehlt die Berechtigung
+        // (so geschehen: VIBRATE stand nicht im Manifest, der erste Tap am Tisch
+        // beendete die App) oder verweigert ein Hersteller-ROM den Dienst, faellt
+        // nur die Rueckmeldung weg - die Runde wird trotzdem gespeichert.
+        try {
+            device.play(timings)
+        } catch (_: SecurityException) {
+            // bewusst still, siehe oben
+        }
+    }
+
+    private class VibratorOutput(private val vibrator: Vibrator) : Output {
+        override fun play(timings: LongArray) {
+            if (!vibrator.hasVibrator()) return
+            // createWaveform statt der einfachen Dauer, weil nur so der
+            // Doppelpuls als EIN Effekt ankommt. Zwei Einzelaufrufe kurz
+            // nacheinander werden vom System zusammengezogen und sind vom Klick
+            // nicht zu unterscheiden.
+            vibrator.vibrate(VibrationEffect.createWaveform(timings, NO_REPEAT))
+        }
     }
 
     companion object {
@@ -55,7 +77,7 @@ class RotaskatHaptics(private val vibrator: Vibrator?) {
         private val FAILURE = longArrayOf(0, 170)
 
         /** Fuer Vorschauen und Tests: alles ist erlaubt, nichts passiert. */
-        val None = RotaskatHaptics(null)
+        val None = RotaskatHaptics(null as Output?)
 
         fun forContext(context: Context): RotaskatHaptics {
             val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
