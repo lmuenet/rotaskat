@@ -35,7 +35,6 @@ import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatAmount
 import io.rotaskat.app.ui.eval.EvalScaffold
 import io.rotaskat.app.ui.eval.EvalSection
-import io.rotaskat.app.ui.eval.Notice
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.shared.model.Club
@@ -120,26 +119,31 @@ private fun ClubSection(
 ) {
     EvalSection(title = if (local) "Ohne Verein" else "Verein ${club.name}") {
         if (local) {
-            Notice(
-                "Alles bleibt auf diesem Gerät. Beim Beitritt zu einem Verein werden die " +
-                    "bisherigen Abende mitgenommen.",
+            Text(
+                text = "Alles bleibt auf diesem Gerät.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(
                 onClick = onJoin,
                 modifier = Modifier.fillMaxWidth().heightIn(min = RotaskatDimens.tapTarget),
             ) { Text("Einem Verein beitreten") }
         } else {
-            Notice(
-                buildString {
-                    if (serverUrl != null) append("Server: $serverUrl\n")
-                    append(
-                        if (pending == 0) {
-                            "Alles ist mit dem Server abgeglichen."
-                        } else {
-                            counted(pending, "Runde wartet", "Runden warten") + " auf den Server."
-                        },
-                    )
+            if (serverUrl != null) {
+                Text(
+                    text = "Server: $serverUrl",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = if (pending == 0) {
+                    "Alles abgeglichen."
+                } else {
+                    counted(pending, "Runde wartet", "Runden warten") + " auf den Server."
                 },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -216,8 +220,13 @@ private fun RosterSection(
 private fun CentsSection(cents: Int, local: Boolean, onChange: (Int) -> Unit) {
     EvalSection(
         title = "Geld",
-        subtitle = if (local) {
+        info = if (local) {
             "Gilt ab dem nächsten Abend. Laufende und beendete Abende behalten ihren Satz."
+        } else {
+            null
+        },
+        subtitle = if (local) {
+            "Gilt ab dem nächsten Abend."
         } else {
             "Der Satz wird auf dem Server gepflegt."
         },

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -109,8 +110,7 @@ fun LocalSetupScreen(
 
             SectionLabel("Wer spielt mit", Modifier.padding(top = RotaskatDimens.sectionSpacing))
             Text(
-                text = "Mindestens $MIN_PLAYERS. Wer nicht jeden Abend dabei ist, kann trotzdem " +
-                    "hier stehen - pro Abend wählt ihr aus, wer am Tisch sitzt.",
+                text = "Mindestens $MIN_PLAYERS – wer fehlt, sitzt einfach nicht mit am Tisch.",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -149,6 +149,7 @@ fun LocalSetupScreen(
                 enabled = canSave,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = RotaskatDimens.tapTarget)
                     .padding(top = RotaskatDimens.sectionSpacing),
             ) {
                 Text(if (busy) "Moment..." else "Los geht's")

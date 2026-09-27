@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -196,6 +197,7 @@ fun NewSessionScreen(
                 enabled = complete && !busy,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = RotaskatDimens.tapTarget)
                     .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp),
             ) {
                 Text(if (complete) "Abend starten" else "Noch nicht alle Plätze besetzt")

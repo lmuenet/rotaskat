@@ -305,8 +305,7 @@ private fun MapPlayersStep(
     ) { Text("Verwerfen und neu anfangen") }
 
     Text(
-        text = "Verwerfen löscht die lokalen Abende endgültig. Sie zeigen auf Spieler, " +
-            "die es im Verein nicht gibt, und wären in jeder Auswertung nur Platzhalter.",
+        text = "Verwerfen löscht die lokalen Abende endgültig.",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 24.dp),
