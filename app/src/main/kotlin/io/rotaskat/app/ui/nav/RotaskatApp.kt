@@ -2,8 +2,10 @@ package io.rotaskat.app.ui.nav
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
@@ -109,8 +112,16 @@ private fun RotaskatNavHost(loaded: LoadedMode, modifier: Modifier) {
         bottomBar = {
             AnimatedVisibility(
                 visible = Routes.isTopLevel(currentRoute),
-                enter = slideInVertically(tween(150)) { it } + fadeIn(tween(150)),
-                exit = slideOutVertically(tween(100)) { it } + fadeOut(tween(100)),
+                // Ohne expandVertically/shrinkVertically behaelt die Leiste ihre
+                // gemessene Groesse waehrend der Animation, und das Scaffold-Padding
+                // fuer den Inhalt springt erst im letzten Frame. Mit den beiden
+                // wandert die Groesse - und damit das Padding - im selben Tempo mit.
+                enter = slideInVertically(tween(150)) { it } +
+                    fadeIn(tween(150)) +
+                    expandVertically(tween(150), expandFrom = Alignment.Top),
+                exit = slideOutVertically(tween(100)) { it } +
+                    fadeOut(tween(100)) +
+                    shrinkVertically(tween(100), shrinkTowards = Alignment.Top),
             ) {
                 RotaskatBottomBar(currentRoute = lastTopLevel, onSelect = actions::toTopLevel)
             }
