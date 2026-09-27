@@ -102,9 +102,9 @@ fun EvalSection(
 /**
  * Ein Hinweis in Worten.
  *
- * Er steht bewusst in derselben Flaechenform wie die Tabellen daneben: was die
- * App einschraenkt - ein laufender Abend, eine duenne Grundlage, eine Abrechnung,
- * die nicht aufgeht -, gehoert neben die Zahl und nicht in eine Fussnote.
+ * Er steht bewusst in derselben Flaechenform wie die Tabellen daneben. Zwei
+ * Faelle: ein leerer Zeitraum ohne Abend, und eine Abrechnung, die nicht auf
+ * null aufgeht.
  */
 @Composable
 fun Notice(text: String, modifier: Modifier = Modifier) {
@@ -123,13 +123,12 @@ fun Notice(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Eine Kennzahl als Kachel: Label, grosser Wert, Grundgesamtheit, optional
- * eine Warnung.
+ * Eine Kennzahl als Kachel: Label, grosser Wert, optional eine
+ * Grundgesamtheit und eine Warnung.
  *
- * [detail] ist kein Beiwerk, sondern die Bedingung dafuer, dass [value]
- * etwas aussagt: eine Quote ohne die Anzahl dahinter ist eine Behauptung.
- * Die Warnung traegt ein Icon statt des Zeichens ⚠, das Android als Emoji
- * zeichnet.
+ * [detail] gehoert zur Zahl, wo es eine Grundgesamtheit gibt - eine Quote
+ * ohne Anzahl ist eine Behauptung. Die Warnung traegt ein Icon statt des
+ * Zeichens ⚠, das Android als Emoji zeichnet.
  */
 @Composable
 fun StatTile(
