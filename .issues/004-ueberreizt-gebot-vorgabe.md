@@ -3,7 +3,7 @@ titel: Überreizt - Gebot startet bei 18 statt über dem Spielwert, „Gewonnen�
 typ: bug
 schwere: mittel
 bereich: Rundeneingabe, RoundDraft
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -35,3 +35,17 @@ in SCORING.md beschrieben.
 - `Scoring.validate()` um „overbid ⇒ bid > gameValue“ ergänzen, damit auch der
   Server solche Runden ablehnt.
 - Bei aktiver Überreizung nur einen Button „Überreizt – verloren“ anzeigen.
+
+## Umsetzung
+
+- Beim Einschalten steht der kleinste Reizwert über dem Spielwert, das Raster
+  zeigt nur Werte darüber, das Gebot wird nachgezogen, wenn Spitzen oder
+  Zusätze den Spielwert heben (`RoundDraft.withOverbid`, `withBidAboveValue`).
+- Bei Überreizung gibt es nur noch den Button „Überreizt – verloren“.
+- **Nicht** umgesetzt: die Regel in `Scoring.validate()`. `Scoring.score()`
+  prüft `validate()` per `require` bei jedem Lesen. Bereits gespeicherte
+  Runden mit Gebot ≤ Spielwert (im Gerätetest ist so eine entstanden) würden
+  dann beim Öffnen des Abends eine Exception werfen, und der Server würde sie
+  beim Sync ablehnen. Abgesichert ist es stattdessen in der Eingabe
+  (`readyForResult`). Falls die Regel serverseitig gewünscht ist, braucht es
+  vorher eine Migration bzw. eine Validierung nur für neue Revisionen.

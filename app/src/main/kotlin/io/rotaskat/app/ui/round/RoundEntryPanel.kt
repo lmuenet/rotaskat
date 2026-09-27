@@ -482,7 +482,7 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
                 )
                 Switch(
                     checked = draft.overbid,
-                    onCheckedChange = { checked -> onChange { it.copy(overbid = checked) } },
+                    onCheckedChange = { checked -> onChange { it.withOverbid(checked) } },
                 )
             }
             if (draft.overbid) {
@@ -490,8 +490,11 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
                 // Der Reizwert kommt aus der Liste der echten Reizstufen: ein
                 // frei getippter Wert, den es nicht gibt, waere still falsch.
                 SectionLabel("Gereizt bis")
-                OptionGrid(columns = 6, itemCount = RoundDraft.BIDS.size) { index ->
-                    val value = RoundDraft.BIDS[index]
+                // Nur Reizwerte UEBER dem Spielwert: alles darunter waere keine
+                // Ueberreizung, sondern ein gewonnenes oder verlorenes Spiel.
+                val bids = draft.overbidOptions
+                OptionGrid(columns = 6, itemCount = bids.size) { index ->
+                    val value = bids[index]
                     OptionTile(
                         label = "$value",
                         selected = draft.bid == value,
@@ -570,6 +573,22 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
             label = "Ramsch eintragen",
             color = colors.lossContainer,
             onContentColor = MaterialTheme.colorScheme.onSurface,
+            enabled = ready,
+            onClick = { onCommit(false) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        return
+    }
+
+    if (draft.effectiveOverbid) {
+        // Ueberreizt ist immer verloren, egal wie die Stiche lagen. Zwei Knoepfe
+        // mit derselben Wirkung und demselben Minus verwirrten genau dort, wo
+        // schnell getippt wird.
+        CommitButton(
+            label = "Überreizt – verloren",
+            detail = draft.declarerHalfPoints(won = false)?.let { formatPoints(it) },
+            color = colors.loss,
+            onContentColor = colors.onLoss,
             enabled = ready,
             onClick = { onCommit(false) },
             modifier = Modifier.fillMaxWidth(),

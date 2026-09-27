@@ -218,6 +218,46 @@ data class RoundDraft(
     val effectiveOverbid: Boolean get() = overbid && overbidApplies
 
     /**
+     * Der Spielwert, wie er OHNE Ueberreizung waere. Nur fuer Farbspiel und
+     * Grand, die einzigen Spiele, die sich ueberreizen lassen.
+     */
+    val regularGameValue: Int?
+        get() = declaration?.takeIf { overbidApplies }?.let { Scoring.gameValue(it) }
+
+    /**
+     * Die Reizwerte, bei denen "ueberreizt" ueberhaupt stimmt: nur die ueber dem
+     * Spielwert. Wer bis 18 gereizt hat und ein Spiel von 108 macht, hat sich
+     * nicht ueberreizt.
+     */
+    val overbidOptions: List<Int>
+        get() {
+            val regular = regularGameValue ?: return BIDS
+            return BIDS.filter { it > regular }
+        }
+
+    /** Ein gesetztes "ueberreizt" mit einem Gebot, das es nicht traegt. */
+    private val overbidInvalid: Boolean
+        get() = effectiveOverbid && (regularGameValue?.let { bid <= it } ?: false)
+
+    /**
+     * Schaltet "ueberreizt" um. Beim Einschalten steht sofort der kleinste
+     * Reizwert ueber dem Spielwert da - der haeufigste Fall, "eins drueber
+     * gereizt", ist damit kein weiterer Tap.
+     */
+    fun withOverbid(on: Boolean): RoundDraft = copy(overbid = on).withBidAboveValue()
+
+    /**
+     * Zieht das Gebot ueber den Spielwert, falls Spitzen oder Zusaetze den Wert
+     * darueber gehoben haben. Wird nach JEDER Aenderung am Entwurf angewandt.
+     */
+    fun withBidAboveValue(): RoundDraft {
+        if (!effectiveOverbid) return this
+        val regular = regularGameValue ?: return this
+        if (bid > regular) return this
+        return copy(bid = overbidOptions.firstOrNull() ?: bid)
+    }
+
+    /**
      * Die antippbaren Spitzenzahlen.
      *
      * Beim Grand sind nur die vier Buben Spitzen. Eine Kachel "7" waere dort
@@ -365,7 +405,7 @@ data class RoundDraft(
      * sichtbar. Erst mit allen drei Zahlen steht die Runde.
      */
     val readyForResult: Boolean
-        get() = gameValue != null && (!isRamsch || ramschReady)
+        get() = gameValue != null && (!isRamsch || ramschReady) && !overbidInvalid
 
     /**
      * Beim Durchmarsch gibt es nichts zu zaehlen, und bei einer Korrektur steht

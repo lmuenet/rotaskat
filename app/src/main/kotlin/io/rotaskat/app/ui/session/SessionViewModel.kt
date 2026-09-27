@@ -120,7 +120,9 @@ class SessionViewModel(
     )
 
     fun updateDraft(transform: (RoundDraft) -> RoundDraft) {
-        _draft.value = _draft.value?.let(transform)
+        // Das Gebot folgt dem Spielwert: wer nach "ueberreizt" noch die Spitzen
+        // aendert, soll kein Gebot unter dem Spielwert stehen haben.
+        _draft.value = _draft.value?.let(transform)?.withBidAboveValue()
     }
 
     /** Ein Tap korrigiert die Rotation. Sie wird nicht jede Runde abgefragt. */
