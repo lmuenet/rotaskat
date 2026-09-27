@@ -1,7 +1,15 @@
 package io.rotaskat.app.ui.eval
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,17 +18,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.ui.LocalRotaskatGraph
-import io.rotaskat.app.ui.common.OptionGrid
-import io.rotaskat.app.ui.common.OptionTile
+import io.rotaskat.app.ui.common.ChipRow
 import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatAverage
-import io.rotaskat.app.ui.common.formatDate
 import io.rotaskat.app.ui.common.formatPercent
 import io.rotaskat.app.ui.common.formatPoints
+import io.rotaskat.app.ui.common.formatShortDate
+import io.rotaskat.app.ui.common.icon
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.theme.RotaskatDimens
+import io.rotaskat.app.ui.theme.accentColors
+import io.rotaskat.app.ui.theme.scoreColors
+import io.rotaskat.shared.model.Suit
 
 /**
  * Die Zahlen eines einzelnen Spielers.
@@ -57,91 +69,122 @@ fun StatsScreen(
         PeriodSelector(seasons = seasons, selected = period, onSelect = viewModel::setPeriod)
 
         if (standings.isEmpty() || selected == null) {
-            Notice("Für diesen Zeitraum ist noch kein Abend erfasst.")
+            Notice("Noch kein Abend in diesem Zeitraum.")
             return@EvalScaffold
         }
 
-        OptionGrid(columns = 2, itemCount = standings.size) { index ->
-            val stats = standings[index]
-            OptionTile(
-                label = stats.player.displayName,
-                selected = stats.player.id == selected.player.id,
-                onClick = { selectedId = stats.player.id },
-                height = RotaskatDimens.tapTarget,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        ChipRow(
+            options = standings,
+            selected = selected,
+            onSelect = { selectedId = it.player.id },
+            label = { it.player.displayName },
+        )
 
-        PlayerStatsCards(selected)
+        EvalSection(
+            title = "Kennzahlen",
+            info = "Überreizt zählt als verloren. Beim Lieblingsspiel zählen nur angesagte Spiele – der Ramsch gehört niemandem.",
+        ) {
+            StatTileGrid(statTiles(selected))
+        }
     }
 }
 
+internal data class StatTileModel(
+    val label: String,
+    val value: String,
+    val detail: String?,
+    val warning: String? = null,
+    val valueColor: Color = Color.Unspecified,
+    @DrawableRes val icon: Int? = null,
+    val iconTint: Color = Color.Unspecified,
+)
+
+/** Die sechs Kennzahlen eines Spielers, in fester Reihenfolge. */
 @Composable
-private fun PlayerStatsCards(stats: PlayerStats) {
-    Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
-        StatTile(
+internal fun statTiles(stats: PlayerStats): List<StatTileModel> {
+    val score = MaterialTheme.scoreColors
+    val accent = MaterialTheme.accentColors
+    val rate = stats.soloWinRate
+    val favourites = stats.favouriteGames
+    val average = stats.averageHalfPointsPerRound
+    val best = stats.bestSession
+    val worst = stats.worstSession
+    val single = favourites.singleOrNull()
+    val suit = when (single) {
+        GameKind.KARO -> Suit.DIAMONDS
+        GameKind.HERZ -> Suit.HEARTS
+        GameKind.PIK -> Suit.SPADES
+        GameKind.KREUZ -> Suit.CLUBS
+        else -> null
+    }
+    return listOf(
+        StatTileModel(
             label = "Punkte",
             value = formatPoints(stats.halfPoints),
-            detail = counted(stats.sessions, "Abend", "Abende") + ", " + counted(stats.rounds, "Runde", "Runden") + " mitgespielt",
-        )
-
-        // Ueberreizt zaehlt als verloren, genau wie in der Abrechnung: wer sich
-        // verreizt hat, hat das Spiel verloren, auch wenn die Stiche gereicht
-        // haetten.
-        val rate = stats.soloWinRate
-        StatTile(
-            label = "Gewinnquote als Alleinspieler",
-            value = if (rate == null) "kein Alleinspiel" else formatPercent(rate),
-            detail = if (rate == null) {
-                "In diesem Zeitraum war ${stats.player.displayName} nie Alleinspieler."
-            } else {
-                "${stats.soloWins} von ${counted(stats.soloRounds, "Alleinspiel", "Alleinspielen")} gewonnen"
+            detail = "${counted(stats.sessions, "Abend", "Abende")} · ${counted(stats.rounds, "Runde", "Runden")}",
+            valueColor = score.forValue(stats.halfPoints),
+        ),
+        StatTileModel(
+            label = "Gewinnquote allein",
+            value = if (rate == null) "–" else formatPercent(rate),
+            detail = if (rate == null) "nie allein" else "${stats.soloWins} von ${stats.soloRounds}",
+            warning = if (rate != null && stats.soloSampleIsThin) "Unter $THIN_SOLO_SAMPLE Alleinspielen wenig aussagekräftig" else null,
+        ),
+        StatTileModel(
+            label = "Ø je Runde",
+            value = if (average == null) "–" else formatAverage(average),
+            detail = if (average == null) null else "aus ${counted(stats.rounds, "Runde", "Runden")}",
+        ),
+        StatTileModel(
+            label = "Lieblingsspiel",
+            value = if (favourites.isEmpty()) "–" else favourites.joinToString(" / ") { it.label },
+            detail = if (favourites.isEmpty()) "nie allein" else "${stats.favouriteGameCount} von ${counted(stats.soloRounds, "Alleinspiel", "Alleinspielen")}",
+            icon = suit?.icon,
+            iconTint = when (suit) {
+                Suit.DIAMONDS, Suit.HEARTS -> accent.suitRed
+                Suit.SPADES, Suit.CLUBS -> accent.suitBlack
+                null -> Color.Unspecified
             },
-            warning = if (rate != null && stats.soloSampleIsThin) {
-                "Unter $THIN_SOLO_SAMPLE Alleinspielen sagt die Quote wenig aus."
-            } else {
-                null
-            },
-        )
-
-        val favourites = stats.favouriteGames
-        StatTile(
-            label = "Häufigstes Alleinspiel",
-            value = if (favourites.isEmpty()) "keines" else favourites.joinToString(" und ") { it.label },
-            detail = if (favourites.isEmpty()) {
-                "Gezählt werden nur angesagte Spiele - der Ramsch gehört niemandem."
-            } else {
-                buildString {
-                    append("${stats.favouriteGameCount} von ${counted(stats.soloRounds, "Alleinspiel", "Alleinspielen")}")
-                    if (favourites.size > 1) append(" - Gleichstand")
-                }
-            },
-        )
-
-        val average = stats.averageHalfPointsPerRound
-        StatTile(
-            label = "Durchschnitt je Runde",
-            value = if (average == null) "keine Runde" else "${formatAverage(average)} Punkte",
-            detail = if (average == null) null else "aus " + counted(stats.rounds, "Runde", "Runden"),
-        )
-
-        val best = stats.bestSession
-        StatTile(
+        ),
+        StatTileModel(
             label = "Bester Abend",
-            value = if (best == null) "keiner" else formatPoints(best.halfPoints),
-            detail = best?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
-        )
-
-        val worst = stats.worstSession
-        StatTile(
+            value = best?.let { formatPoints(it.halfPoints) } ?: "–",
+            detail = best?.let { "${formatShortDate(it.startedAt)} · ${counted(it.rounds, "Runde", "Runden")}" },
+            valueColor = best?.let { score.forValue(it.halfPoints) } ?: Color.Unspecified,
+        ),
+        StatTileModel(
             label = "Schlechtester Abend",
-            value = if (worst == null) "keiner" else formatPoints(worst.halfPoints),
-            detail = worst?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
-            warning = if (best != null && worst != null && stats.sessions == 1) {
-                "Es gibt bisher genau einen Abend - bester und schlechtester sind derselbe."
-            } else {
-                null
-            },
-        )
+            value = worst?.let { formatPoints(it.halfPoints) } ?: "–",
+            detail = worst?.let { "${formatShortDate(it.startedAt)} · ${counted(it.rounds, "Runde", "Runden")}" },
+            warning = if (best != null && worst != null && stats.sessions == 1) "nur ein Abend" else null,
+            valueColor = worst?.let { score.forValue(it.halfPoints) } ?: Color.Unspecified,
+        ),
+    )
+}
+
+/** Zwei Kacheln je Reihe, jede Reihe so hoch wie ihre hoechste Kachel. */
+@Composable
+internal fun StatTileGrid(tiles: List<StatTileModel>, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+        for (pair in tiles.chunked(2)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            ) {
+                for (tile in pair) {
+                    StatTile(
+                        label = tile.label,
+                        value = tile.value,
+                        detail = tile.detail,
+                        warning = tile.warning,
+                        valueColor = tile.valueColor,
+                        icon = tile.icon,
+                        iconTint = tile.iconTint,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                    )
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
     }
 }
