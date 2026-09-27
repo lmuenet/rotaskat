@@ -173,7 +173,6 @@ internal fun LiveSessionCard(
             )
             Button(
                 onClick = onContinue,
-                shape = RoundedCornerShape(RotaskatDimens.tileCorner),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp)
