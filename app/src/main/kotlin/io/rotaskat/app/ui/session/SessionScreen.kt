@@ -127,6 +127,11 @@ fun SessionScreen(
                 viewModel.consumeMessage()
             }
 
+            SessionMessage.Ended -> {
+                viewModel.consumeMessage()
+                actions.toSettlementAfterEnd(sessionId)
+            }
+
             is SessionMessage.Failed -> {
                 haptics.failure()
                 viewModel.consumeMessage()
@@ -198,13 +203,18 @@ fun SessionScreen(
 
     if (confirmEnd) {
         // Die einzige Rueckfrage der App, und zwar bewusst: "Abend beenden"
-        // passiert genau einmal pro Abend, ist nicht rueckgaengig zu machen und
+        // passiert genau einmal pro Abend, ist nur ueber die Abrechnung umkehrbar und
         // liegt in der Kopfzeile direkt neben nichts. Alle Rueckfragen, die
         // dreissigmal am Abend kaemen, gibt es dagegen nicht.
         AlertDialog(
             onDismissRequest = { confirmEnd = false },
             title = { Text("Abend beenden?") },
-            text = { Text("Danach können keine Runden mehr eingetragen werden.") },
+            text = {
+                Text(
+                    "Danach geht es direkt zur Abrechnung. Wer dort noch einen Fehler " +
+                        "findet, kann den Abend wieder öffnen.",
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     confirmEnd = false
@@ -266,7 +276,8 @@ internal fun SessionBody(
         ) {
             if (state.session.status == SessionStatus.CLOSED) {
                 Text(
-                    text = "Dieser Abend ist beendet. Neue Runden gibt es nicht mehr.",
+                    text = "Dieser Abend ist beendet. Wer noch eine Runde korrigieren muss: " +
+                        "in der Abrechnung „Abend wieder öffnen“.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -401,13 +412,17 @@ private fun RoundHistory(
 ) {
     val live = state.liveRounds
     if (live.isEmpty()) return
+    // Im beendeten Abend fuehrte ein Tap frueher in einen leeren
+    // Korrekturbildschirm ohne Eingabe - eine Sackgasse. Korrigiert wird nach
+    // dem Wiederoeffnen aus der Abrechnung.
+    val editable = state.session.status == SessionStatus.OPEN
     Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
         Text(
             text = "Runden (${live.size})",
             style = MaterialTheme.typography.titleSmall,
         )
         for ((index, round) in live.withIndex().reversed()) {
-            RoundRow(round = round, number = index + 1, names = names, onEdit = onEdit)
+            RoundRow(round = round, number = index + 1, names = names, editable = editable, onEdit = onEdit)
         }
     }
 }
@@ -417,6 +432,7 @@ private fun RoundRow(
     round: ScoredRound,
     number: Int,
     names: Map<Int, String>,
+    editable: Boolean,
     onEdit: (String) -> Unit,
 ) {
     val colors = MaterialTheme.scoreColors
@@ -424,6 +440,7 @@ private fun RoundRow(
     val half = subject?.let { round.score.halfPoints[it] } ?: 0
     Surface(
         onClick = { onEdit(round.id) },
+        enabled = editable,
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),

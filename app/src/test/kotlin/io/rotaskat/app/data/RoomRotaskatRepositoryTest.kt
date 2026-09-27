@@ -188,6 +188,41 @@ class RoomRotaskatRepositoryTest {
         assertNull(repository.observeOpenSession().first())
     }
 
+    /**
+     * Ein Tippfehler faellt am Tisch typischerweise erst beim Bezahlen auf. Der
+     * Abend laesst sich deshalb wieder oeffnen - als neue Revision, damit der
+     * Sync den Status mitnimmt.
+     */
+    @Test
+    fun `Ein beendeter Abend laesst sich wieder oeffnen`() = runTest {
+        val sessionId = startEvening()
+        repository.endSession(sessionId, endedAt = T0)
+        val closedRevision = assertNotNull(database.sessionDao().find(sessionId)).revision
+        syncRequests = 0
+
+        repository.reopenSession(sessionId)
+
+        val state = assertNotNull(repository.session(sessionId))
+        assertEquals(SessionStatus.OPEN, state.session.status)
+        assertNull(state.session.endedAt)
+        assertEquals(sessionId, repository.observeOpenSession().first()?.session?.id)
+        val entity = assertNotNull(database.sessionDao().find(sessionId))
+        assertEquals(closedRevision + 1, entity.revision)
+        assertTrue(entity.pendingSync)
+        assertEquals(1, syncRequests)
+    }
+
+    /** Es gibt hoechstens einen laufenden Abend - auch nach dem Wiederoeffnen. */
+    @Test
+    fun `Ein Abend oeffnet nicht, solange ein anderer laeuft`() = runTest {
+        val first = startEvening()
+        repository.endSession(first, endedAt = T0)
+        repository.startSession(seatCount = 3, seats = mapOf(0 to "p0", 1 to "p1", 2 to "p2"), startedAt = T0)
+
+        assertFailsWith<IllegalStateException> { repository.reopenSession(first) }
+        assertEquals(SessionStatus.CLOSED, assertNotNull(repository.session(first)).session.status)
+    }
+
     @Test
     fun `Eine strukturell ungueltige Runde wird gar nicht erst gespeichert`() = runTest {
         val sessionId = startEvening()

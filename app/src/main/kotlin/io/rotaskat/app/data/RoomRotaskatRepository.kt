@@ -214,6 +214,19 @@ class RoomRotaskatRepository(
         syncTrigger.requestSync()
     }
 
+    override suspend fun reopenSession(sessionId: String) {
+        database.withTransaction {
+            val entity = sessionDao.find(sessionId) ?: error("Diesen Abend gibt es nicht mehr.")
+            if (entity.status == SessionStatus.OPEN) return@withTransaction
+            val open = sessionDao.openSession()
+            check(open == null) { "Es läuft schon ein anderer Abend. Erst den beenden." }
+            // Neue Revision statt stiller Aenderung: der Server uebernimmt den
+            // Status nur ueber eine hoehere Revision.
+            bumpSession(entity.copy(status = SessionStatus.OPEN, endedAt = null))
+        }
+        syncTrigger.requestSync()
+    }
+
     override suspend fun setDealer(sessionId: String, dealerSeat: Int) {
         database.withTransaction {
             val entity = sessionDao.find(sessionId) ?: return@withTransaction

@@ -91,6 +91,20 @@ class RotaskatNavActions(private val navController: NavHostController) {
 
     fun toSettlement(sessionId: String) = navController.navigate(Routes.settlement(sessionId))
 
+    /**
+     * Nach "Abend beenden" ist die Abrechnung fast immer der naechste Schritt.
+     * Sie ersetzt den Abend im Stapel: zurueck geht es in die Uebersicht, nicht
+     * in einen Abend, in dem nichts mehr einzutragen ist.
+     */
+    fun toSettlementAfterEnd(sessionId: String) = navController.navigate(Routes.settlement(sessionId)) {
+        popUpTo(Routes.SESSION_PATTERN) { inclusive = true }
+    }
+
+    /** Ein wieder geoeffneter Abend ersetzt seine Abrechnung im Stapel. */
+    fun toSessionAfterReopen(sessionId: String) = navController.navigate(Routes.session(sessionId)) {
+        popUpTo(Routes.SETTLEMENT_PATTERN) { inclusive = true }
+    }
+
     fun toHistory(sessionId: String) = navController.navigate(Routes.history(sessionId))
 
     fun toLeaderboard() = navController.navigate(Routes.LEADERBOARD)

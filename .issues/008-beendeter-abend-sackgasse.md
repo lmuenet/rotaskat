@@ -3,7 +3,7 @@ titel: Beendeter Abend - Runden sind antippbar und führen in einen leeren Korre
 typ: bug
 schwere: mittel
 bereich: Abend, Navigation
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -41,3 +41,15 @@ Dazu passend:
 - Entscheiden, ob „Abend wieder öffnen“ erlaubt sein soll, etwa nur am selben
   Tag oder nur, solange nicht synchronisiert wurde. Wenn nein, das im Dialog
   deutlicher sagen.
+
+## Umsetzung
+
+- Rundenzeilen im beendeten Abend sind nicht mehr antippbar; der Hinweistext
+  nennt den Weg zum Korrigieren.
+- „gibt“ steht nur bei offenem Abend (kam mit #003).
+- Nach „Beenden“ geht es direkt in die Abrechnung, der Abend wird im Stapel
+  ersetzt.
+- Entscheidung des Nutzers: Ein beendeter Abend lässt sich jederzeit über
+  „Abend wieder öffnen“ in der Abrechnung wieder öffnen
+  (`RotaskatRepository.reopenSession`, neue Revision, Sync nimmt den Status
+  mit). Nicht möglich, solange ein anderer Abend läuft.

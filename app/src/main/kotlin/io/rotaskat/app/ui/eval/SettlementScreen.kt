@@ -11,13 +11,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,6 +43,7 @@ import io.rotaskat.app.ui.theme.scoreColors
 import io.rotaskat.shared.model.SessionStatus
 import io.rotaskat.shared.settlement.Payment
 import io.rotaskat.shared.settlement.Settlement
+import kotlinx.coroutines.launch
 
 /**
  * Die Geldabrechnung eines Abends.
@@ -86,6 +91,44 @@ fun SettlementScreen(
 
         val names = seatNames(current.session, roster)
         SettlementBody(state = current, names = names)
+
+        if (current.session.status == SessionStatus.CLOSED) {
+            ReopenSection(
+                onReopen = {
+                    graph.repository.reopenSession(sessionId)
+                    actions.toSessionAfterReopen(sessionId)
+                },
+            )
+        }
+    }
+}
+
+/**
+ * Der Weg zurueck in einen beendeten Abend.
+ *
+ * Ein Tippfehler faellt am Tisch typischerweise erst beim Bezahlen auf, also
+ * genau hier. Ohne diesen Weg liesse er sich nicht mehr korrigieren. Bewusst
+ * klein und am Ende: die Abrechnung ist der Normalfall, das Wiederoeffnen die
+ * Ausnahme.
+ */
+@Composable
+private fun ReopenSection(onReopen: suspend () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf<String?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+        OutlinedButton(
+            onClick = {
+                scope.launch {
+                    error = runCatching { onReopen() }.exceptionOrNull()?.message
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Abend wieder öffnen") }
+        Text(
+            text = error ?: "Zum Korrigieren einer Runde. Danach läuft der Abend weiter, bis er erneut beendet wird.",
+            style = MaterialTheme.typography.bodySmall,
+            color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

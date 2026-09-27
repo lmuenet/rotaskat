@@ -40,6 +40,9 @@ sealed interface SessionMessage {
 
     data object Undone : SessionMessage
 
+    /** Der Abend ist beendet, weiter geht es in die Abrechnung. */
+    data object Ended : SessionMessage
+
     data class Failed(val text: String) : SessionMessage
 }
 
@@ -259,6 +262,7 @@ class SessionViewModel(
     fun endSession() {
         viewModelScope.launch {
             runCatching { repository.endSession(sessionId) }
+                .onSuccess { _message.value = SessionMessage.Ended }
                 .onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }
         }
     }

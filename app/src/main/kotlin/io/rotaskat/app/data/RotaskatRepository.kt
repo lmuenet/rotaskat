@@ -154,6 +154,13 @@ interface RotaskatRepository {
 
     suspend fun endSession(sessionId: String, endedAt: Instant = Clock.System.now())
 
+    /**
+     * Oeffnet einen beendeten Abend wieder, etwa weil beim Abrechnen ein
+     * Tippfehler auffaellt. Scheitert, solange ein anderer Abend laeuft - es
+     * gibt hoechstens einen.
+     */
+    suspend fun reopenSession(sessionId: String)
+
     /** Ein Tap korrigiert die automatisch fortgeschriebene Rotation. */
     suspend fun setDealer(sessionId: String, dealerSeat: Int)
 
