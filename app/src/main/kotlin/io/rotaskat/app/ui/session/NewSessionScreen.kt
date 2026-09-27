@@ -197,8 +197,8 @@ fun NewSessionScreen(
                 enabled = complete && !busy,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = RotaskatDimens.tapTarget)
-                    .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp),
+                    .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp)
+                    .heightIn(min = RotaskatDimens.tapTarget),
             ) {
                 Text(if (complete) "Abend starten" else "Noch nicht alle Plätze besetzt")
             }

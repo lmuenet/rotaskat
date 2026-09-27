@@ -137,7 +137,9 @@ fun LocalSetupScreen(
                 TextButton(onClick = { names.add("") }) { Text("+ Spieler") }
             }
 
-            Button(
+            LocalSetupPrimaryButton(
+                label = if (busy) "Moment..." else "Los geht's",
+                enabled = canSave,
                 onClick = {
                     viewModel.createLocalClub(
                         name = clubName,
@@ -146,14 +148,7 @@ fun LocalSetupScreen(
                         onDone = onDone,
                     )
                 },
-                enabled = canSave,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = RotaskatDimens.tapTarget)
-                    .padding(top = RotaskatDimens.sectionSpacing),
-            ) {
-                Text(if (busy) "Moment..." else "Los geht's")
-            }
+            )
 
             if (filled < MIN_PLAYERS) {
                 Text(
@@ -164,5 +159,31 @@ fun LocalSetupScreen(
                 )
             }
         }
+    }
+}
+
+/**
+ * Der Haupt-Button des Einrichtens, eigenstaendig fuer den Test ohne
+ * ViewModel/Graph.
+ *
+ * Reihenfolge der Modifier ist wichtig: `padding` VOR `heightIn`, sonst
+ * frisst das Padding die Mindesthoehe wieder auf, siehe [RotaskatDimens.tapTarget].
+ */
+@Composable
+internal fun LocalSetupPrimaryButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = RotaskatDimens.sectionSpacing)
+            .heightIn(min = RotaskatDimens.tapTarget),
+    ) {
+        Text(label)
     }
 }
