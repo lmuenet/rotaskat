@@ -144,8 +144,11 @@ fun SuitTile(
  * Kneipenlicht ist ein Farbunterschied allein zu wenig, um eine getroffene
  * Auswahl im Vorbeisehen zu erkennen.
  *
- * `selectable` statt `Surface(onClick)`, damit TalkBack "ausgewaehlt" und die
- * Rolle vorliest - im Geraetetest meldeten die Kacheln beides nicht.
+ * `selectable`/`clickable` statt `Surface(onClick)`, damit TalkBack "ausgewaehlt"
+ * und die Rolle vorliest - im Geraetetest meldeten die Kacheln beides nicht. Bei
+ * [Role.RadioButton] ist die Flaeche `selectable` und meldet die Auswahl; bei
+ * jeder anderen Rolle (etwa [Role.Button] fuer "mehr") ist sie nur `clickable`
+ * und meldet keine Auswahl, weil es keine ist.
  */
 @Composable
 private fun TileFrame(

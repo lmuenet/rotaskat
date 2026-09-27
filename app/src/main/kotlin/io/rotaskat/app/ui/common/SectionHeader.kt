@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.app.ui.theme.accentColors
 
@@ -45,7 +46,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, info: String? = 
             modifier = Modifier.weight(1f),
         )
         if (info != null) {
-            IconButton(onClick = { open = true }, modifier = Modifier.size(48.dp)) {
+            IconButton(onClick = { open = true }, modifier = Modifier.size(RotaskatDimens.tapTarget)) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
                     contentDescription = "Erklärung zu $title",
