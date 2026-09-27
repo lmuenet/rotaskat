@@ -27,7 +27,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
@@ -281,43 +287,69 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 /**
  * Die grossen Ergebnisflaechen. Sie sind gleichzeitig die Speichern-Buttons -
  * einen zusaetzlichen Commit gibt es bewusst nicht, siehe [OptionTile].
+ *
+ * Solange die Runde nicht vollstaendig ist, bleibt der Button als
+ * gestrichelter Umriss mit [placeholder] stehen: gleiche Hoehe, gleiche Stelle.
+ * Ein Button, der erst beim letzten Tap auftaucht, laesst das Layout springen
+ * und wird dann daneben getippt.
  */
 @Composable
 fun CommitButton(
     label: String,
-    color: Color,
-    onContentColor: Color,
+    container: Color,
+    onContainer: Color,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     detail: String? = null,
+    placeholder: String = "+ ?",
     /** Der Ausgang, der vor der Korrektur gespeichert war. */
     previous: Boolean = false,
 ) {
+    val accent = MaterialTheme.accentColors
+    val shape = RoundedCornerShape(RotaskatDimens.commitCorner)
+    val dashed = if (enabled) {
+        Modifier
+    } else {
+        Modifier.drawBehind {
+            val stroke = 1.5.dp.toPx()
+            drawRoundRect(
+                color = accent.disabledOutline,
+                topLeft = Offset(stroke / 2, stroke / 2),
+                size = Size(size.width - stroke, size.height - stroke),
+                cornerRadius = CornerRadius(RotaskatDimens.commitCorner.toPx()),
+                style = Stroke(
+                    width = stroke,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx())),
+                ),
+            )
+        }
+    }
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.defaultMinSize(minHeight = RotaskatDimens.commitButton),
-        shape = RoundedCornerShape(18.dp),
-        border = if (previous) {
-            androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface)
-        } else {
-            null
-        },
-        color = if (enabled) color else MaterialTheme.colorScheme.surfaceContainerLowest,
-        contentColor = if (enabled) onContentColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+        modifier = modifier
+            .defaultMinSize(minHeight = RotaskatDimens.commitButton)
+            .then(dashed),
+        shape = shape,
+        border = if (previous) BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface) else null,
+        color = if (enabled) container else Color.Transparent,
+        contentColor = if (enabled) onContainer else accent.labelMuted,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = label, style = MaterialTheme.typography.titleLarge)
-                if (detail != null) {
-                    // Was der Alleinspieler bei diesem Ausgang bekaeme, schon vor
-                    // dem Tap. Die zweite Gelegenheit, einen falsch getippten
-                    // Spielwert zu bemerken.
-                    Text(
-                        text = if (previous) "$detail · bisher" else detail,
-                        style = MaterialTheme.typography.labelMedium,
-                    )
+                Text(text = label, style = MaterialTheme.typography.titleMedium)
+                // Was der Alleinspieler bei diesem Ausgang bekaeme, schon vor
+                // dem Tap. Die zweite Gelegenheit, einen falsch getippten
+                // Spielwert zu bemerken.
+                val points = when {
+                    !enabled -> placeholder
+                    detail == null -> null
+                    previous -> "$detail · bisher"
+                    else -> detail
+                }
+                if (points != null) {
+                    Text(text = points, style = RotaskatTextStyles.commitPoints)
                 }
             }
         }

@@ -535,38 +535,32 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
 @Composable
 private fun GameValueDisplay(draft: RoundDraft) {
     val value = draft.displayedGameValue
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp, horizontal = 16.dp),
-        ) {
-            Text(
-                text = value?.toString() ?: "-",
-                style = RotaskatTextStyles.gameValue,
-                color = if (value != null) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                textAlign = TextAlign.Center,
-                // Feste Breite fuer drei Ziffern: die Herleitung springt sonst
-                // bei jedem Wechsel zwischen 18 und 108 zur Seite.
-                modifier = Modifier.widthIn(min = 96.dp),
-            )
-            Text(
-                text = draft.derivation() ?: draft.missingHint(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        Text(
+            text = value?.toString() ?: "–",
+            style = RotaskatTextStyles.gameValue,
+            color = if (value != null) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
+            textAlign = TextAlign.Center,
+            // Feste Breite fuer drei Ziffern: die Herleitung springt sonst
+            // bei jedem Wechsel zwischen 18 und 108 zur Seite.
+            modifier = Modifier.widthIn(min = 96.dp),
+        )
+        Text(
+            text = draft.derivation() ?: draft.missingHint(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -581,9 +575,10 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
         // Speichern-Knopf, es gibt auch hier keine Rueckfrage.
         CommitButton(
             label = "Ramsch eintragen",
-            color = colors.lossContainer,
-            onContentColor = MaterialTheme.colorScheme.onSurface,
+            container = colors.lossContainer,
+            onContainer = colors.onLossContainer,
             enabled = ready,
+            placeholder = "Augen eintragen",
             onClick = { onCommit(false) },
             modifier = Modifier.fillMaxWidth(),
         )
@@ -597,9 +592,10 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
         CommitButton(
             label = "Überreizt – verloren",
             detail = draft.declarerHalfPoints(won = false)?.let { formatPoints(it) },
-            color = colors.loss,
-            onContentColor = colors.onLoss,
+            container = colors.lossContainer,
+            onContainer = colors.onLossContainer,
             enabled = ready,
+            placeholder = "- ?",
             onClick = { onCommit(false) },
             modifier = Modifier.fillMaxWidth(),
         )
@@ -610,25 +606,29 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing),
         modifier = Modifier.fillMaxWidth(),
     ) {
+        // Gewonnen ist breiter: es ist der haeufigere Ausgang und liegt damit
+        // dort, wo der Daumen ohne Hinsehen landet.
         CommitButton(
             label = "Gewonnen",
             detail = draft.declarerHalfPoints(won = true)?.let { formatPoints(it) },
-            color = colors.gain,
-            onContentColor = colors.onGain,
+            container = colors.gainContainer,
+            onContainer = colors.onGainContainer,
             enabled = ready,
+            placeholder = "+ ?",
             onClick = { onCommit(true) },
             previous = draft.originalWon == true,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(5f),
         )
         CommitButton(
             label = "Verloren",
             detail = draft.declarerHalfPoints(won = false)?.let { formatPoints(it) },
-            color = colors.loss,
-            onContentColor = colors.onLoss,
+            container = colors.lossContainer,
+            onContainer = colors.onLossContainer,
             enabled = ready,
+            placeholder = "- ?",
             onClick = { onCommit(false) },
             previous = draft.originalWon == false,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(4f),
         )
     }
 }
