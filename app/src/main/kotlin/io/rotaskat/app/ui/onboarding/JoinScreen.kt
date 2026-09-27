@@ -86,7 +86,7 @@ fun JoinScreen(
                         onClick = {
                             if (state is JoinUiState.ChoosePlayer) viewModel.backToEntry() else onBack()
                         }
-                    ) { Text("Zurueck") }
+                    ) { Text("Zurück") }
                 },
             )
         },
@@ -155,7 +155,7 @@ private fun EntryStep(
         onValueChange = onServerUrl,
         label = { Text("Serveradresse") },
         placeholder = { Text("https://skat.example.de") },
-        supportingText = { Text("Die Adresse, unter der euer Rotaskat-Server laeuft.") },
+        supportingText = { Text("Die Adresse, unter der euer Rotaskat-Server läuft.") },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -228,8 +228,8 @@ private fun ChoosePlayerStep(
     OutlinedTextField(
         value = deviceLabel,
         onValueChange = onDeviceLabel,
-        label = { Text("Geraetename (optional)") },
-        supportingText = { Text("Taucht nur in der Geraeteliste des Vereins auf.") },
+        label = { Text("Gerätename (optional)") },
+        supportingText = { Text("Taucht nur in der Geräteliste des Vereins auf.") },
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
@@ -263,7 +263,7 @@ private fun MapPlayersStep(
 ) {
     Text("Beitritt steht", style = MaterialTheme.typography.headlineSmall)
     Text(
-        text = "Auf diesem Geraet ${if (state.sessionCount == 1) "liegt noch ein Abend" else
+        text = "Auf diesem Gerät ${if (state.sessionCount == 1) "liegt noch ein Abend" else
             "liegen noch ${state.sessionCount} Abende"} aus der Zeit ohne Verein. " +
             "Wer von euren lokalen Spielern ist welches Vereinsmitglied?",
         style = MaterialTheme.typography.bodyMedium,
@@ -304,7 +304,7 @@ private fun MapPlayersStep(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = RotaskatDimens.sectionSpacing),
-    ) { Text("Abende uebernehmen") }
+    ) { Text("Abende übernehmen") }
 
     OutlinedButton(
         onClick = onDiscard,
@@ -314,8 +314,8 @@ private fun MapPlayersStep(
     ) { Text("Verwerfen und neu anfangen") }
 
     Text(
-        text = "Verwerfen loescht die lokalen Abende endgueltig. Sie zeigen auf Spieler, " +
-            "die es im Verein nicht gibt, und waeren in jeder Auswertung nur Platzhalter.",
+        text = "Verwerfen löscht die lokalen Abende endgültig. Sie zeigen auf Spieler, " +
+            "die es im Verein nicht gibt, und wären in jeder Auswertung nur Platzhalter.",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 24.dp),

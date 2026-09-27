@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.OptionGrid
 import io.rotaskat.app.ui.common.OptionTile
+import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatAverage
 import io.rotaskat.app.ui.common.formatDate
 import io.rotaskat.app.ui.common.formatPercent
@@ -56,7 +57,7 @@ fun StatsScreen(
         PeriodSelector(seasons = seasons, selected = period, onSelect = viewModel::setPeriod)
 
         if (standings.isEmpty() || selected == null) {
-            Notice("Fuer diesen Zeitraum ist noch kein Abend erfasst.")
+            Notice("Für diesen Zeitraum ist noch kein Abend erfasst.")
             return@EvalScaffold
         }
 
@@ -81,7 +82,7 @@ private fun PlayerStatsCards(stats: PlayerStats) {
         StatCard(
             label = "Punkte",
             value = formatPoints(stats.halfPoints),
-            detail = "${stats.sessions} Abende, ${stats.rounds} Runden mitgespielt",
+            detail = counted(stats.sessions, "Abend", "Abende") + ", " + counted(stats.rounds, "Runde", "Runden") + " mitgespielt",
         )
 
         // Ueberreizt zaehlt als verloren, genau wie in der Abrechnung: wer sich
@@ -94,7 +95,7 @@ private fun PlayerStatsCards(stats: PlayerStats) {
             detail = if (rate == null) {
                 "In diesem Zeitraum war ${stats.player.displayName} nie Alleinspieler."
             } else {
-                "${stats.soloWins} von ${stats.soloRounds} Alleinspielen gewonnen"
+                "${stats.soloWins} von ${counted(stats.soloRounds, "Alleinspiel", "Alleinspielen")} gewonnen"
             },
             warning = if (rate != null && stats.soloSampleIsThin) {
                 "Unter $THIN_SOLO_SAMPLE Alleinspielen sagt die Quote wenig aus."
@@ -103,14 +104,17 @@ private fun PlayerStatsCards(stats: PlayerStats) {
             },
         )
 
-        val favourite = stats.favouriteGame
+        val favourites = stats.favouriteGames
         StatCard(
-            label = "Haeufigstes Alleinspiel",
-            value = favourite?.key?.label ?: "keines",
-            detail = if (favourite == null) {
-                "Gezaehlt werden nur angesagte Spiele - der Ramsch gehoert niemandem."
+            label = "Häufigstes Alleinspiel",
+            value = if (favourites.isEmpty()) "keines" else favourites.joinToString(" und ") { it.label },
+            detail = if (favourites.isEmpty()) {
+                "Gezählt werden nur angesagte Spiele - der Ramsch gehört niemandem."
             } else {
-                "${favourite.value} von ${stats.soloRounds} Alleinspielen"
+                buildString {
+                    append("${stats.favouriteGameCount} von ${counted(stats.soloRounds, "Alleinspiel", "Alleinspielen")}")
+                    if (favourites.size > 1) append(" - Gleichstand")
+                }
             },
         )
 
@@ -118,21 +122,21 @@ private fun PlayerStatsCards(stats: PlayerStats) {
         StatCard(
             label = "Durchschnitt je Runde",
             value = if (average == null) "keine Runde" else "${formatAverage(average)} Punkte",
-            detail = if (average == null) null else "aus ${stats.rounds} Runden",
+            detail = if (average == null) null else "aus " + counted(stats.rounds, "Runde", "Runden"),
         )
 
         val best = stats.bestSession
         StatCard(
             label = "Bester Abend",
             value = if (best == null) "keiner" else formatPoints(best.halfPoints),
-            detail = best?.let { "${formatDate(it.startedAt)}, ${it.rounds} Runden" },
+            detail = best?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
         )
 
         val worst = stats.worstSession
         StatCard(
             label = "Schlechtester Abend",
             value = if (worst == null) "keiner" else formatPoints(worst.halfPoints),
-            detail = worst?.let { "${formatDate(it.startedAt)}, ${it.rounds} Runden" },
+            detail = worst?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
             warning = if (best != null && worst != null && stats.sessions == 1) {
                 "Es gibt bisher genau einen Abend - bester und schlechtester sind derselbe."
             } else {

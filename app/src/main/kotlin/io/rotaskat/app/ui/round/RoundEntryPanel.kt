@@ -217,7 +217,7 @@ fun RoundCommitBar(
                 }
                 if (onDelete != null) {
                     TextButton(onClick = onDelete, modifier = Modifier.weight(1f)) {
-                        Text("Runde loeschen", color = MaterialTheme.colorScheme.error)
+                        Text("Runde löschen", color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -253,7 +253,7 @@ private fun DealerRow(
                 modifier = Modifier.weight(1f),
             )
             if (!draft.editing) {
-                TextButton(onClick = onToggle) { Text(if (expanded) "fertig" else "aendern") }
+                TextButton(onClick = onToggle) { Text(if (expanded) "fertig" else "ändern") }
             }
         }
         if (expanded && !draft.editing) {
@@ -321,7 +321,7 @@ private fun ExtrasSection(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
             ) {
                 CountBadge(draft.extrasCount) {
-                    Text("Zusaetze", style = MaterialTheme.typography.titleSmall)
+                    Text("Zusätze", style = MaterialTheme.typography.titleSmall)
                 }
                 Text(
                     text = if (expanded) "zuklappen" else "aufklappen",
@@ -380,7 +380,7 @@ private fun ExtrasControls(draft: RoundDraft, onChange: ((RoundDraft) -> RoundDr
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
             ) {
                 Text(
-                    text = "Ueberreizt",
+                    text = "Überreizt",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -441,7 +441,7 @@ private fun GameValueDisplay(draft: RoundDraft) {
                 },
             )
             Text(
-                text = draft.derivation() ?: "Alleinspieler und Spielart waehlen",
+                text = draft.derivation() ?: "Alleinspieler und Spielart wählen",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

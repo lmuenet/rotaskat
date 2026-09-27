@@ -74,7 +74,7 @@ fun LocalSetupScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Ohne Verein") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Zurueck") } },
+                navigationIcon = { TextButton(onClick = onBack) { Text("Zurück") } },
             )
         },
     ) { padding ->
@@ -117,7 +117,7 @@ fun LocalSetupScreen(
             SectionLabel("Wer spielt mit", Modifier.padding(top = RotaskatDimens.sectionSpacing))
             Text(
                 text = "Mindestens $MIN_PLAYERS. Wer nicht jeden Abend dabei ist, kann trotzdem " +
-                    "hier stehen - pro Abend waehlt ihr aus, wer am Tisch sitzt.",
+                    "hier stehen - pro Abend wählt ihr aus, wer am Tisch sitzt.",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

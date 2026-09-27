@@ -142,9 +142,26 @@ class StatisticsTest {
         val anna = Statistics.standings(listOf(sessionState("s", T_MAERZ, rounds)), TEST_CLUB.roster)
             .first { it.player.displayName == "Anna" }
 
-        assertEquals(GameKind.KREUZ, anna.favouriteGame?.key)
-        assertEquals(2, anna.favouriteGame?.value)
+        assertEquals(listOf(GameKind.KREUZ), anna.favouriteGames)
+        assertEquals(2, anna.favouriteGameCount)
         assertEquals(3, anna.soloRounds)
+    }
+
+    /**
+     * Kreuz einmal, Herz einmal: vorn liegt keins. Frueher gewann die
+     * Reihenfolge der Aufzaehlung, und die Statistik behauptete "Kreuz - 1 von 2".
+     */
+    @Test
+    fun `Bei Gleichstand stehen alle haeufigsten Alleinspiele da`() {
+        val rounds = listOf(
+            suitRound("r1", dealerSeat = 3, declarerSeat = 0, suit = Suit.HEARTS),
+            suitRound("r2", dealerSeat = 1, declarerSeat = 0, suit = Suit.CLUBS),
+        )
+        val anna = Statistics.standings(listOf(sessionState("s", T_MAERZ, rounds)), TEST_CLUB.roster)
+            .first { it.player.displayName == "Anna" }
+
+        assertEquals(listOf(GameKind.HERZ, GameKind.KREUZ), anna.favouriteGames)
+        assertEquals(1, anna.favouriteGameCount)
     }
 
     // --- Fixtures ---------------------------------------------------------

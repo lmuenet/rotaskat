@@ -151,7 +151,7 @@ class SessionViewModel(
         val draft = _draft.value ?: return
         val round = draft.toRound(won)
         if (round == null) {
-            _message.value = SessionMessage.Failed("Die Runde ist noch nicht vollstaendig.")
+            _message.value = SessionMessage.Failed("Die Runde ist noch nicht vollständig.")
             return
         }
         val errors = Scoring.validate(round)
@@ -179,7 +179,7 @@ class SessionViewModel(
             }
             result.onSuccess {
                 _message.value = if (editing && previous != null) {
-                    SessionMessage.Saved("Runde geaendert", UndoToken.Restore(previous), closesEdit = true)
+                    SessionMessage.Saved("Runde geändert", UndoToken.Restore(previous), closesEdit = true)
                 } else {
                     SessionMessage.Saved(
                         if (won) "Gewonnen gespeichert" else "Verloren gespeichert",
@@ -220,7 +220,7 @@ class SessionViewModel(
                     // demselben Inhalt wieder aufheben. Physisch geloescht wurde
                     // nichts, deshalb geht das ueberhaupt.
                     _message.value =
-                        SessionMessage.Saved("Runde geloescht", UndoToken.Restore(existing))
+                        SessionMessage.Saved("Runde gelöscht", UndoToken.Restore(existing))
                     if (_draft.value?.roundId == roundId) cancelEdit()
                 }
                 .onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }

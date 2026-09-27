@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.StandingRow
 import io.rotaskat.app.ui.common.StandingsTable
+import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatPercent
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 
@@ -43,7 +44,7 @@ fun LeaderboardScreen(
 
         if (standings.isEmpty()) {
             Notice(
-                "Fuer diesen Zeitraum ist noch kein Abend erfasst. Die Rangliste " +
+                "Für diesen Zeitraum ist noch kein Abend erfasst. Die Rangliste " +
                     "entsteht aus den gespielten Runden, nicht aus dem Kader.",
             )
             return@EvalScaffold
@@ -57,7 +58,7 @@ fun LeaderboardScreen(
         }
 
         Notice(
-            "Gezaehlt werden alle nicht geloeschten Runden, auch die des laufenden " +
+            "Gezählt werden alle nicht gelöschten Runden, auch die des laufenden " +
                 "Abends. Jeder Abend rechnet mit den Hausregeln, die zu seinem Anpfiff " +
                 "galten.",
         )
@@ -76,16 +77,16 @@ private fun PlayerStats.toRow(): StandingRow = StandingRow(
     name = player.displayName,
     halfPoints = halfPoints,
     detail = buildString {
-        append("$sessions ")
-        append(if (sessions == 1) "Abend" else "Abende")
-        append(" - $rounds ")
-        append(if (rounds == 1) "Runde" else "Runden")
+        append(counted(sessions, "Abend", "Abende"))
+        append(" - ")
+        append(counted(rounds, "Runde", "Runden"))
         append(" - allein ")
         val rate = soloWinRate
         if (rate == null) {
             append("nie")
         } else {
-            append("${formatPercent(rate)} ($soloWins von $soloRounds)")
+            // Geschuetzte Leerzeichen: die Klammer bricht sonst mitten in "2 von 2" um.
+            append("${formatPercent(rate)}\u00A0($soloWins\u00A0von\u00A0$soloRounds)")
         }
     },
 )

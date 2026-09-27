@@ -43,5 +43,8 @@ fun formatAverage(halfPointsPerRound: Double): String {
  * Die zugrunde liegende Anzahl steht in der Oberflaeche immer daneben. Eine
  * Quote aus fuenf Spielen ist keine Quote, sondern ein Zufall mit Prozentzeichen
  * - siehe [io.rotaskat.app.ui.eval.PlayerStats.soloSampleIsThin].
+ *
+ * Zwischen Zahl und Prozentzeichen steht ein geschuetztes Leerzeichen, damit
+ * "100 %" in einer schmalen Zeile nicht auseinanderbricht.
  */
-fun formatPercent(share: Double): String = "${(share * 100).roundToInt()} %"
+fun formatPercent(share: Double): String = "${(share * 100).roundToInt()}\u00A0%"

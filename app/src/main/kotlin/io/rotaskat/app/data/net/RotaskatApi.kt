@@ -46,10 +46,10 @@ sealed interface PushResult {
 }
 
 /** Das Geraetetoken ist weg oder wurde stillgelegt. Erneuter Beitritt noetig. */
-class ApiUnauthorizedException : IllegalStateException("Geraetetoken ungueltig")
+class ApiUnauthorizedException : IllegalStateException("Gerätetoken ungültig")
 
 /** Das Geraet ist noch keinem Verein beigetreten - es gibt nichts zu synchronisieren. */
-class NotJoinedException : IllegalStateException("Kein Geraetetoken hinterlegt")
+class NotJoinedException : IllegalStateException("Kein Gerätetoken hinterlegt")
 
 class ApiFailureException(
     val status: HttpStatusCode,

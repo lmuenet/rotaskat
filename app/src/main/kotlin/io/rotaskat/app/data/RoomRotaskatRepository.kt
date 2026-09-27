@@ -121,7 +121,7 @@ class RoomRotaskatRepository(
     override suspend fun adoptLocalData(club: Club, playerMapping: Map<String, String>) {
         val targets = club.roster.mapTo(mutableSetOf()) { it.id }
         require(playerMapping.values.all { it in targets }) {
-            "Die Zuordnung zeigt auf Spieler ausserhalb des Kaders"
+            "Die Zuordnung zeigt auf Spieler außerhalb des Kaders"
         }
 
         database.withTransaction {
@@ -135,7 +135,7 @@ class RoomRotaskatRepository(
                 .filter { it !in playerMapping }
                 .distinct()
             require(unmapped.isEmpty()) {
-                "Fuer diese lokalen Spieler fehlt die Zuordnung: ${unmapped.joinToString()}"
+                "Für diese lokalen Spieler fehlt die Zuordnung: ${unmapped.joinToString()}"
             }
 
             saveClubWithin(club)
@@ -184,11 +184,11 @@ class RoomRotaskatRepository(
         startedAt: Instant,
     ): String {
         require(seatCount in 3..4) { "seatCount muss 3 oder 4 sein, ist $seatCount" }
-        require(dealerSeat in 0 until seatCount) { "dealerSeat $dealerSeat liegt ausserhalb des Tisches" }
+        require(dealerSeat in 0 until seatCount) { "dealerSeat $dealerSeat liegt außerhalb des Tisches" }
         val missing = (0 until seatCount).filter { it !in seats.keys }
-        require(missing.isEmpty()) { "Sitzplaetze $missing sind unbesetzt" }
+        require(missing.isEmpty()) { "Sitzplätze $missing sind unbesetzt" }
 
-        val club = club() ?: error("Ohne Verein laesst sich kein Abend starten")
+        val club = club() ?: error("Ohne Verein lässt sich kein Abend starten")
         val session = Session.startedFor(
             id = Uuid7.next(),
             club = club,
@@ -218,7 +218,7 @@ class RoomRotaskatRepository(
         database.withTransaction {
             val entity = sessionDao.find(sessionId) ?: return@withTransaction
             require(dealerSeat in 0 until entity.seatCount) {
-                "dealerSeat $dealerSeat liegt ausserhalb des Tisches"
+                "dealerSeat $dealerSeat liegt außerhalb des Tisches"
             }
             if (entity.dealerSeat == dealerSeat) return@withTransaction
             bumpSession(entity.copy(dealerSeat = dealerSeat))
@@ -481,7 +481,7 @@ class RoomRotaskatRepository(
             "Runde ${round.id} hat seatCount ${round.seatCount}, die Session ${session.seatCount}"
         }
         val errors = Scoring.validate(round)
-        require(errors.isEmpty()) { "Ungueltige Runde ${round.id}: ${errors.joinToString("; ")}" }
+        require(errors.isEmpty()) { "Ungültige Runde ${round.id}: ${errors.joinToString("; ")}" }
     }
 
     private fun stateOf(session: Session, entities: List<RoundEntity>): SessionState {

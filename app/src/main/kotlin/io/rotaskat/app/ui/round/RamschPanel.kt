@@ -80,7 +80,7 @@ fun RamschPanel(
                         missing.joinToString(" und ") { seatNames[it] ?: "Platz ${it + 1}" }
 
                     total == Scoring.MAX_CARD_POINTS -> "Summe $total - stimmt"
-                    else -> "Summe $total statt ${Scoring.MAX_CARD_POINTS} - bitte nachzaehlen"
+                    else -> "Summe $total statt ${Scoring.MAX_CARD_POINTS} - bitte nachzählen"
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (complete && total == Scoring.MAX_CARD_POINTS) {
@@ -104,7 +104,7 @@ fun RamschPanel(
                 }
             }
 
-            SectionLabel("Schuebe")
+            SectionLabel("Schübe")
             OptionGrid(columns = Scoring.MAX_PUSHES + 1, itemCount = Scoring.MAX_PUSHES + 1) { index ->
                 OptionTile(
                     label = "$index",

@@ -111,10 +111,19 @@ data class PlayerStats(
 
     val worstSession: SessionResult? get() = results.minWithOrNull(bySessionScore)
 
-    val favouriteGame: Map.Entry<GameKind, Int>?
-        get() = declarations.entries
-            .sortedWith(compareByDescending<Map.Entry<GameKind, Int>> { it.value }.thenBy { it.key.ordinal })
-            .firstOrNull()
+    /** Wie oft die haeufigste Spielart angesagt wurde, 0 ohne Alleinspiel. */
+    val favouriteGameCount: Int get() = declarations.values.maxOrNull() ?: 0
+
+    /**
+     * Die am haeufigsten angesagten Spielarten. Mehr als eine heisst
+     * Gleichstand, und dann stehen alle da: sonst entschiede die Reihenfolge
+     * der Aufzaehlung, und bei Kreuz 1x, Null 1x hiesse es "Kreuz".
+     */
+    val favouriteGames: List<GameKind>
+        get() = declarations
+            .filter { it.value == favouriteGameCount && it.value > 0 }
+            .keys
+            .sortedBy { it.ordinal }
 
     private companion object {
         val bySessionScore: Comparator<SessionResult> =

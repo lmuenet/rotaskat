@@ -26,6 +26,7 @@ import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.StandingRow
 import io.rotaskat.app.ui.common.StandingsTable
+import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatAmount
 import io.rotaskat.app.ui.common.formatCents
 import io.rotaskat.app.ui.common.formatDate
@@ -98,8 +99,8 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 
     if (state.session.status == SessionStatus.OPEN) {
         Notice(
-            "Dieser Abend laeuft noch. Die Abrechnung ist ein Zwischenstand und " +
-                "aendert sich mit jeder weiteren Runde.",
+            "Dieser Abend läuft noch. Die Abrechnung ist ein Zwischenstand und " +
+                "ändert sich mit jeder weiteren Runde.",
         )
     }
 
@@ -115,7 +116,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 
     EvalSection(
         title = "Zahlungen",
-        note = "So wenige Zahlungen wie moeglich - nicht jeder mit jedem.",
+        note = "So wenige Zahlungen wie möglich - nicht jeder mit jedem.",
     ) {
         if (settlement.payments.isEmpty()) {
             Notice("Alles ausgeglichen. Heute zahlt niemand.")
@@ -131,7 +132,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
     EvalSection(
         title = "Salden",
         note = "${state.session.centsPerPoint} Cent je Punkt, am Anpfiff dieses Abends " +
-            "festgehalten. Plus heisst bekommt, Minus heisst zahlt.",
+            "festgehalten. Plus heißt bekommt, Minus heißt zahlt.",
     ) {
         BalanceTable(settlement = settlement, names = names, state = state)
     }
@@ -143,7 +144,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 private fun Endstand(state: SessionState, names: Map<Int, String>) {
     EvalSection(
         title = "Endstand",
-        note = "${state.liveRounds.size} Runden",
+        note = counted(state.liveRounds.size, "Runde", "Runden"),
     ) {
         StandingsTable(
             rows = (0 until state.session.seatCount)

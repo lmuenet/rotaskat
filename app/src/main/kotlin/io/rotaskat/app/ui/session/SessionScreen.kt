@@ -115,7 +115,7 @@ fun SessionScreen(
                 } else {
                     val result = snackbarHostState.showSnackbar(
                         message = current.text,
-                        actionLabel = "Rueckgaengig",
+                        actionLabel = "Rückgängig",
                         // Ohne Angabe waehlt Material3 bei gesetztem
                         // actionLabel Indefinite. Die Leiste bliebe dann ueber
                         // den Ergebnisknoepfen der naechsten Runde stehen, und
@@ -147,7 +147,7 @@ fun SessionScreen(
                 title = { Text(if (editRoundId != null) "Runde korrigieren" else "Abend") },
                 navigationIcon = {
                     if (editRoundId != null) {
-                        TextButton(onClick = { actions.back() }) { Text("Zurueck") }
+                        TextButton(onClick = { actions.back() }) { Text("Zurück") }
                     }
                 },
                 actions = {
@@ -257,7 +257,7 @@ fun SessionScreen(
         AlertDialog(
             onDismissRequest = { confirmEnd = false },
             title = { Text("Abend beenden?") },
-            text = { Text("Danach koennen keine Runden mehr eingetragen werden.") },
+            text = { Text("Danach können keine Runden mehr eingetragen werden.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirmEnd = false
@@ -356,7 +356,7 @@ private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (Strin
     val half = subject?.let { round.score.halfPoints[it] } ?: 0
     val outcome = when {
         round.round.declaration is RamschGame -> "Ramsch"
-        round.round.overbid -> "ueberreizt"
+        round.round.overbid -> "überreizt"
         round.round.won -> "gewonnen"
         else -> "verloren"
     }
@@ -391,7 +391,7 @@ private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (Strin
                         append(names[subject] ?: "Platz ?")
                         append(" - ")
                         append(outcome)
-                        if (round.deleted) append(" - geloescht")
+                        if (round.deleted) append(" - gelöscht")
                         if (round.pendingSync) append(" - wartet auf Sync")
                     },
                     style = MaterialTheme.typography.labelSmall,

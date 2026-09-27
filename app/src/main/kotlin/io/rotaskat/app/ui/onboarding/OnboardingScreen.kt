@@ -48,7 +48,7 @@ fun OnboardingScreen(
             modifier = Modifier.padding(top = 40.dp),
         )
         Text(
-            text = "Punkte fuer eure Skatrunde. Wie soll es losgehen?",
+            text = "Punkte für eure Skatrunde. Wie soll es losgehen?",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = RotaskatDimens.sectionSpacing),
@@ -56,8 +56,8 @@ fun OnboardingScreen(
 
         ChoiceCard(
             title = "Ohne Verein",
-            body = "Spieler eintragen und sofort loslegen. Alles bleibt auf diesem Geraet, " +
-                "kein Server noetig. Ihr koennt spaeter jederzeit einem Verein beitreten - " +
+            body = "Spieler eintragen und sofort loslegen. Alles bleibt auf diesem Gerät, " +
+                "kein Server nötig. Ihr könnt später jederzeit einem Verein beitreten - " +
                 "die bereits gespielten Abende kommen dann mit.",
             onClick = onLocal,
         )
@@ -65,13 +65,13 @@ fun OnboardingScreen(
         ChoiceCard(
             title = "Mit Verein",
             body = "Ihr habt schon einen Rotaskat-Server und einen Einladungscode. " +
-                "Die Abende landen dort und die Rangliste gilt fuer alle Mitglieder, " +
+                "Die Abende landen dort und die Rangliste gilt für alle Mitglieder, " +
                 "egal wer den Abend aufgeschrieben hat.",
             onClick = onJoin,
         )
 
         Text(
-            text = "Gespielt und gerechnet wird in beiden Faellen offline. " +
+            text = "Gespielt und gerechnet wird in beiden Fällen offline. " +
                 "Die App braucht am Tisch nie Empfang.",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

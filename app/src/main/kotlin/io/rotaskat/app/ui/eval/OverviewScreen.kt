@@ -183,7 +183,7 @@ private fun SessionCard(
                             append("${state.liveRounds.size} ")
                             append(if (state.liveRounds.size == 1) "Runde" else "Runden")
                             append(" - ${state.session.seatCount} Spieler")
-                            if (state.session.status == SessionStatus.OPEN) append(" - laeuft")
+                            if (state.session.status == SessionStatus.OPEN) append(" - läuft")
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -18,6 +18,7 @@ import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.StandingRow
 import io.rotaskat.app.ui.common.StandingsTable
+import io.rotaskat.app.ui.common.counted
 import io.rotaskat.app.ui.common.formatDate
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.seatNames
@@ -68,13 +69,13 @@ fun ProgressScreen(
         EvalSection(
             title = "Verlauf",
             note = "Waagerecht die Runden, senkrecht der laufende Stand in Punkten. " +
-                "Die Nulllinie ist staerker gezeichnet.",
+                "Die Nulllinie ist stärker gezeichnet.",
         ) {
             PointsChart(series = series)
             ChartLegend(series = series, modifier = Modifier.padding(top = 8.dp))
         }
 
-        EvalSection(title = "Stand", note = "${current.liveRounds.size} Runden") {
+        EvalSection(title = "Stand", note = counted(current.liveRounds.size, "Runde", "Runden")) {
             StandingsTable(
                 rows = series
                     .mapIndexed { seat, line ->

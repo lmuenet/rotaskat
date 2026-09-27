@@ -275,10 +275,10 @@ class OnboardingViewModel(
             "Einladungscode unbekannt. Stimmt der Code, und zeigt die Adresse auf den richtigen Server?"
 
         error is ApiFailureException ->
-            "Der Server antwortet mit ${error.status}. Laeuft dort schon eine passende Fassung?"
+            "Der Server antwortet mit ${error.status}. Läuft dort schon eine passende Fassung?"
 
         else ->
-            "Server nicht erreichbar. Adresse pruefen - und ohne Verein loslegen geht immer."
+            "Server nicht erreichbar. Adresse prüfen - und ohne Verein loslegen geht immer."
     }
 
     companion object {

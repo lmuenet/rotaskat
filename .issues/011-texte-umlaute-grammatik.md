@@ -3,7 +3,7 @@ titel: Oberflächentexte - ASCII-Umschreibungen statt Umlaute, Grammatik- und Lo
 typ: bug / Text
 schwere: niedrig (aber überall sichtbar)
 bereich: alle Bildschirme
-status: offen
+status: erledigt (Ramsch-Meldung siehe #005)
 gefunden: 2026-09-27
 ---
 

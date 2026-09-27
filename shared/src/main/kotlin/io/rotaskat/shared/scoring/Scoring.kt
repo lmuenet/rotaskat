@@ -162,7 +162,7 @@ object Scoring {
         checked(left.toLong() * right.toLong(), what)
 
     private fun checked(value: Long, what: String): Int {
-        require(value in INT_RANGE) { "$what laeuft ueber: $value passt nicht in einen Int" }
+        require(value in INT_RANGE) { "$what läuft über: $value passt nicht in einen Int" }
         return value.toInt()
     }
 
@@ -192,7 +192,7 @@ object Scoring {
      */
     fun score(round: Round, config: ScoringConfig = ScoringConfig()): RoundScore {
         validate(round).let { errors ->
-            require(errors.isEmpty()) { "Ungueltige Runde ${round.id}: ${errors.joinToString("; ")}" }
+            require(errors.isEmpty()) { "Ungültige Runde ${round.id}: ${errors.joinToString("; ")}" }
         }
 
         val halfPoints = round.seats.associateWith { 0 }.toMutableMap()
@@ -255,7 +255,7 @@ object Scoring {
         val range = 0 until round.seatCount
 
         if (round.dealerSeat !in range) {
-            errors += "dealerSeat ${round.dealerSeat} liegt ausserhalb des Tisches"
+            errors += "dealerSeat ${round.dealerSeat} liegt außerhalb des Tisches"
         }
 
         if (round.seatCount == 4) {
@@ -263,7 +263,7 @@ object Scoring {
             if (out == null) {
                 errors += "sittingOutSeat ist am Vierertisch Pflicht"
             } else if (out !in range) {
-                errors += "sittingOutSeat $out liegt ausserhalb des Tisches"
+                errors += "sittingOutSeat $out liegt außerhalb des Tisches"
             } else if (out != round.dealerSeat) {
                 // Sonst rotiert die App an einer anderen Stellung weiter, als
                 // die Runde abgerechnet wurde.
@@ -280,29 +280,29 @@ object Scoring {
                 errors += "Ramsch braucht ein RamschResult"
             } else {
                 if (ramsch.loserSeat !in range) {
-                    errors += "loserSeat ${ramsch.loserSeat} liegt ausserhalb des Tisches"
+                    errors += "loserSeat ${ramsch.loserSeat} liegt außerhalb des Tisches"
                 } else if (ramsch.loserSeat == round.sittingOutSeat) {
                     errors += "Der Aussetzende kann den Ramsch nicht verlieren"
                 }
                 if (ramsch.cardPoints !in 0..MAX_CARD_POINTS) {
-                    errors += "cardPoints ${ramsch.cardPoints} liegt ausserhalb 0..$MAX_CARD_POINTS"
+                    errors += "cardPoints ${ramsch.cardPoints} liegt außerhalb 0..$MAX_CARD_POINTS"
                 }
                 val durchmarsch = ramsch.durchmarschSeat
                 if (durchmarsch != null && durchmarsch !in range) {
-                    errors += "durchmarschSeat $durchmarsch liegt ausserhalb des Tisches"
+                    errors += "durchmarschSeat $durchmarsch liegt außerhalb des Tisches"
                 } else if (durchmarsch != null && durchmarsch == round.sittingOutSeat) {
                     errors += "Der Aussetzende kann keinen Durchmarsch machen"
                 }
                 if (ramsch.pushes !in 0..MAX_PUSHES) {
-                    errors += "pushes ${ramsch.pushes} liegt ausserhalb 0..$MAX_PUSHES"
+                    errors += "pushes ${ramsch.pushes} liegt außerhalb 0..$MAX_PUSHES"
                 }
             }
         } else {
             val declarer = round.declarerSeat
             if (declarer == null) {
-                errors += "declarerSeat ist ausserhalb des Ramsch Pflicht"
+                errors += "declarerSeat ist außerhalb des Ramsch Pflicht"
             } else if (declarer !in range) {
-                errors += "declarerSeat $declarer liegt ausserhalb des Tisches"
+                errors += "declarerSeat $declarer liegt außerhalb des Tisches"
             } else if (declarer == round.sittingOutSeat) {
                 errors += "Der Aussetzende kann nicht Alleinspieler sein"
             }
@@ -321,11 +321,11 @@ object Scoring {
                 errors += "Spitzenzahl muss zwischen ${allowed.first} und ${allowed.last} liegen, ist $matadors"
             }
             if (round.overbid && round.bid == null) {
-                errors += "Ueberreizt ohne Reizwert laesst sich nicht abrechnen"
+                errors += "Überreizt ohne Reizwert lässt sich nicht abrechnen"
             }
             val bid = round.bid
             if (bid != null && bid !in MIN_BID..MAX_BID) {
-                errors += "Reizwert $bid liegt ausserhalb $MIN_BID..$MAX_BID"
+                errors += "Reizwert $bid liegt außerhalb $MIN_BID..$MAX_BID"
             }
         }
 

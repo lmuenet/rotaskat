@@ -50,3 +50,11 @@ fun initials(displayName: String): String {
         else -> (parts[0].take(1) + parts[1].take(1)).uppercase()
     }
 }
+
+/**
+ * Anzahl mit dem passenden Wort: "1 Runde", "2 Runden", "0 Runden".
+ *
+ * Eine Stelle fuer alle Zaehler, weil "1 Abende" sonst an jeder Anzeige neu
+ * entsteht, an der jemand nur an den Normalfall gedacht hat.
+ */
+fun counted(count: Int, one: String, many: String): String = "$count ${if (count == 1) one else many}"

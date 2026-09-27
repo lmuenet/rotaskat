@@ -81,7 +81,7 @@ fun NewSessionScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Neuer Abend") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Zurueck") } },
+                navigationIcon = { TextButton(onClick = onBack) { Text("Zurück") } },
             )
         },
     ) { padding ->
@@ -133,7 +133,7 @@ fun NewSessionScreen(
                     seatCount = seatCount,
                     center = {
                         Text(
-                            text = if (activeSeat != null) "Platz ${activeSeat!! + 1}\nwaehlen" else "Tisch",
+                            text = if (activeSeat != null) "Platz ${activeSeat!! + 1}\nwählen" else "Tisch",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -206,7 +206,7 @@ fun NewSessionScreen(
                     .fillMaxWidth()
                     .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp),
             ) {
-                Text(if (complete) "Abend starten" else "Noch nicht alle Plaetze besetzt")
+                Text(if (complete) "Abend starten" else "Noch nicht alle Plätze besetzt")
             }
         }
     }

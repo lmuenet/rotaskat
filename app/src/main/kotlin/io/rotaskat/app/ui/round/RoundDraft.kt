@@ -411,7 +411,7 @@ data class RoundDraft(
         // dem kleinsten Vielfachen des Grundwerts, das den Reizwert erreicht.
         val declaration = declaration ?: return regular
         val overbidValue = Scoring.overbidValue(declaration, bid)
-        return "$regular, ueberreizt auf $bid = $overbidValue" + contraSuffix()
+        return "$regular, überreizt auf $bid = $overbidValue" + contraSuffix()
     }
 
     private fun ramschDerivation(): String {

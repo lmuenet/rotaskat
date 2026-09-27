@@ -59,7 +59,7 @@ fun EvalScaffold(
                 },
                 navigationIcon = {
                     if (onBack != null) {
-                        TextButton(onClick = onBack) { Text("Zurueck") }
+                        TextButton(onClick = onBack) { Text("Zurück") }
                     }
                 },
                 actions = actions,
