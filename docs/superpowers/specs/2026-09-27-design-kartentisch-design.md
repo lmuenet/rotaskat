@@ -159,7 +159,7 @@ um, siehe SCOPE "Eingabemodell"), nicht in der Herleitung.
 ### `RotaskatTopBar` (neu)
 
 Duenne Huelle um `TopAppBar`: Zurueck-Pfeil (optional), Titel in Barlow
-SemiBold 20sp, optional Untertitel, Aktionen als Icons und ein Menue ⋮.
+SemiBold 22sp (`titleLarge`), optional Untertitel, Aktionen als Icons und ein Menue ⋮.
 Ersetzt alle `TextButton("Zurueck")` in der App.
 
 ### Icons
