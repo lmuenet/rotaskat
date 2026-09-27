@@ -83,7 +83,7 @@ class RoundHistoryTest {
                     editing = false,
                     scrollState = rememberScrollState(),
                     onDraftChange = {},
-                    onDealerChange = {},
+                    onDealerClick = {},
                     onCommit = {},
                     onEditRound = {},
                     onCancelEdit = {},

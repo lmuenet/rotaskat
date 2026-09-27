@@ -109,7 +109,7 @@ class SessionLayoutTest {
                         editing = false,
                         scrollState = rememberScrollState(),
                         onDraftChange = {},
-                        onDealerChange = {},
+                        onDealerClick = {},
                         onCommit = {},
                         onEditRound = {},
                         onCancelEdit = {},

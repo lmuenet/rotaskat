@@ -3,7 +3,6 @@ package io.rotaskat.app.ui.round
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -62,8 +61,8 @@ import io.rotaskat.shared.model.Suit
  *    getrennter Commit, kein Bestaetigungsdialog. Bei dreissig Runden pro Abend
  *    wird jede Rueckfrage blind weggetippt, damit ist sie kein Schutz mehr,
  *    sondern nur noch ein Tap. Abgesichert wird ueber Undo.
- *  - Der Geber und damit der Aussetzende rotieren automatisch weiter. Gefragt
- *    wird nicht, korrigiert werden kann immer.
+ *  - Der Geber und damit der Aussetzende rotieren automatisch weiter.
+ *    Korrigiert wird ueber den Stand oben (Tap auf den Geber) oder das Menue.
  *
  * Dieses Panel enthaelt ausschliesslich die scrollende EINGABE. Spielwert und
  * Ergebnisknoepfe stehen in [RoundCommitBar] und liegen fest unter dem
@@ -74,11 +73,9 @@ fun RoundEntryPanel(
     draft: RoundDraft,
     seatNames: Map<Int, String>,
     onDraftChange: ((RoundDraft) -> RoundDraft) -> Unit,
-    onDealerChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var extrasExpanded by rememberSaveable { mutableStateOf(false) }
-    var dealerExpanded by rememberSaveable { mutableStateOf(false) }
     var moreMatadors by rememberSaveable { mutableStateOf(false) }
     val haptics = LocalHaptics.current
 
@@ -98,21 +95,7 @@ fun RoundEntryPanel(
     ) {
 
         Column {
-            // Der Geber steht im Kopf der Spielerauswahl statt in einer eigenen
-            // Zeile darueber: das spart eine Zeile, und er gehoert inhaltlich
-            // genau hierher - am Vierertisch ist er der, den man nicht antippen
-            // kann.
-            DealerHeader(
-                draft = draft,
-                seatNames = seatNames,
-                expanded = dealerExpanded,
-                onToggle = { dealerExpanded = !dealerExpanded },
-                onDealerChange = {
-                    haptics.select()
-                    onDealerChange(it)
-                    dealerExpanded = false
-                },
-            )
+            SectionLabel("Alleinspieler")
             // Alle Spieler in EINER Reihe. Zwei Reihen kosteten 72dp, und genau
             // die fehlten auf dem Geraet, um die Spitzen ohne Scrollen zu sehen.
             OptionGrid(columns = draft.seatCount, itemCount = draft.seatCount) { seat ->
@@ -226,69 +209,6 @@ fun RoundCommitBar(
                         Text("Runde löschen", color = MaterialTheme.colorScheme.error)
                     }
                 }
-            }
-        }
-    }
-}
-
-/**
- * Kopf der Spielerauswahl mit dem Geber.
- *
- * Der Geber ist der einzige Wert, den die App selbst gesetzt hat. Er ist eine
- * Anzeige mit Korrekturmoeglichkeit, keine Frage - ein Tap oeffnet die Auswahl,
- * ein Tap auf den richtigen Geber schliesst sie wieder.
- */
-@Composable
-private fun DealerHeader(
-    draft: RoundDraft,
-    seatNames: Map<Int, String>,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    onDealerChange: (Int) -> Unit,
-) {
-    val dealer = seatNames[draft.dealerSeat] ?: "Platz ${draft.dealerSeat + 1}"
-    val dealerText = if (draft.seatCount == 4) "$dealer gibt und setzt aus" else "$dealer gibt"
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
-        ) {
-            Text(
-                text = "Alleinspieler",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            if (draft.editing) {
-                Text(
-                    text = dealerText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                TextButton(onClick = onToggle) {
-                    Text(
-                        text = if (expanded) "Wer gibt?" else "$dealerText · ändern",
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        if (expanded && !draft.editing) {
-            OptionGrid(
-                columns = draft.seatCount,
-                itemCount = draft.seatCount,
-                modifier = Modifier.padding(bottom = RotaskatDimens.itemSpacing),
-            ) { seat ->
-                OptionTile(
-                    label = seatNames[seat] ?: "Platz ${seat + 1}",
-                    selected = draft.dealerSeat == seat,
-                    onClick = { onDealerChange(seat) },
-                    height = RotaskatDimens.tapTarget,
-                    modifier = Modifier.weight(1f),
-                )
             }
         }
     }

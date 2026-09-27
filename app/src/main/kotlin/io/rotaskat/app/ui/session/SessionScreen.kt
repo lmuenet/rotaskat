@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -36,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.ScoredRound
@@ -100,6 +98,7 @@ fun SessionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var confirmEnd by rememberSaveable { mutableStateOf(false) }
+    var dealerSheet by rememberSaveable { mutableStateOf(false) }
     val empty = state?.liveRounds?.isEmpty() == true
 
     // Ein ausgegangener Bildschirm kostet zwischen zwei Runden mehr Zeit als die
@@ -196,7 +195,7 @@ fun SessionScreen(
             editing = editRoundId != null,
             scrollState = scrollState,
             onDraftChange = viewModel::updateDraft,
-            onDealerChange = viewModel::setDealer,
+            onDealerClick = { dealerSheet = true },
             onCommit = viewModel::commit,
             onEditRound = { roundId -> actions.toRoundEdit(sessionId, roundId) },
             onCancelEdit = { viewModel.cancelEdit(); actions.back() },
@@ -248,6 +247,22 @@ fun SessionScreen(
             },
         )
     }
+
+    val sheetDraft = draft
+    val sheetState = state
+    if (dealerSheet && sheetDraft != null && sheetState != null) {
+        DealerSheet(
+            seatCount = sheetState.session.seatCount,
+            names = seatNames(sheetState.session, roster),
+            dealerSeat = sheetDraft.dealerSeat,
+            onPick = { seat ->
+                haptics.select()
+                viewModel.setDealer(seat)
+                dealerSheet = false
+            },
+            onDismiss = { dealerSheet = false },
+        )
+    }
 }
 
 /**
@@ -264,7 +279,7 @@ internal fun SessionBody(
     editing: Boolean,
     scrollState: ScrollState,
     onDraftChange: ((RoundDraft) -> RoundDraft) -> Unit,
-    onDealerChange: (Int) -> Unit,
+    onDealerClick: () -> Unit,
     onCommit: (won: Boolean) -> Unit,
     onEditRound: (String) -> Unit,
     onCancelEdit: () -> Unit,
@@ -282,9 +297,19 @@ internal fun SessionBody(
         // Der Stand bleibt stehen, waehrend die Eingabe darunter scrollt.
         // Er ist die einzige Zahl, die zwischen zwei Runden staendig gesucht
         // wird - ein Stand, der weggescrollt ist, wird stattdessen gefragt.
+        //
+        // Nach dem Abend gibt niemand mehr - die Marke waere dort nur Rauschen.
+        // In der Korrektur zaehlt der Geber der Runde, nicht die Rotation.
+        val dealerSeat = when {
+            state.session.status != SessionStatus.OPEN -> null
+            editing -> draft.dealerSeat
+            else -> state.session.dealerSeat
+        }
         Scoreboard(
             state = state,
             names = names,
+            dealerSeat = dealerSeat,
+            onDealerClick = if (editing) null else onDealerClick,
             modifier = Modifier.padding(top = RotaskatDimens.itemSpacing),
         )
 
@@ -316,7 +341,6 @@ internal fun SessionBody(
                         draft = draft,
                         seatNames = names,
                         onDraftChange = onDraftChange,
-                        onDealerChange = onDealerChange,
                     )
                 }
             }
@@ -350,70 +374,6 @@ internal fun SessionBody(
 /** Test-Tags fuer den Layout-Test. */
 internal object SessionTags {
     const val SCROLL_AREA = "session-scroll"
-}
-
-/**
- * Der Stand.
- *
- * Punkte immer mit Vorzeichen und in Tabellenziffern; die Farbe ist der
- * Zweitkanal, nie der einzige Traeger. Wer aussetzt, steht mit dabei - eine
- * Spalte, die verschwindet und wiederkommt, laesst die Tabelle bei jedem Blick
- * anders aussehen.
- */
-@Composable
-private fun Scoreboard(state: SessionState, names: Map<Int, String>, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.scoreColors
-    // Nach dem Abend gibt niemand mehr - das "gibt" waere dort nur Rauschen.
-    val open = state.session.status == SessionStatus.OPEN
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 8.dp)) {
-            for (seat in 0 until state.session.seatCount) {
-                val half = state.totals[seat] ?: 0L
-                val sittingOut = open && seat == state.rotation.sittingOutSeat
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    // "gibt" steht in der Namenszeile statt in einer eigenen
-                    // dritten Zeile. Die Zeile kostete auf dem Geraet genau den
-                    // Platz, der fuer die Spitzen fehlte. Der Name kuerzt sich
-                    // notfalls, das Wort bleibt stehen.
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = names[seat] ?: "Platz ${seat + 1}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (sittingOut) colors.sittingOut else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (sittingOut) {
-                            Text(
-                                text = " · gibt",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = colors.sittingOut,
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                    Text(
-                        text = formatPoints(half),
-                        style = RotaskatTextStyles.scoreLarge,
-                        color = when {
-                            half > 0 -> colors.gain
-                            half < 0 -> colors.loss
-                            else -> colors.neutral
-                        },
-                    )
-                }
-            }
-        }
-    }
 }
 
 /**
