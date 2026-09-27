@@ -21,6 +21,20 @@ fun formatDate(instant: Instant, zone: TimeZone = TimeZone.currentSystemDefault(
     return String.format(Locale.GERMANY, "%02d.%02d.%04d", date.dayOfMonth, date.monthNumber, date.year)
 }
 
+private val WEEKDAYS = listOf("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+
+/** Kurzes Datum mit Wochentag fuer Kopfzeilen und Listen: "Sa 14.3.". */
+fun formatShortDate(instant: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+    val date = instant.toLocalDateTime(zone).date
+    return "${WEEKDAYS[date.dayOfWeek.ordinal]} ${date.dayOfMonth}.${date.monthNumber}."
+}
+
+/** Uhrzeit ohne Sekunden: "19:30". */
+fun formatTime(instant: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+    val time = instant.toLocalDateTime(zone).time
+    return String.format(Locale.GERMANY, "%02d:%02d", time.hour, time.minute)
+}
+
 /**
  * Ein Durchschnitt in halben Punkten je Runde, angezeigt in ganzen Punkten.
  *

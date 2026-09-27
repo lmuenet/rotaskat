@@ -1,9 +1,14 @@
 package io.rotaskat.app.ui.session
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -11,11 +16,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import io.rotaskat.app.R
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.common.formatPoints
 import io.rotaskat.app.ui.common.label
@@ -63,8 +71,10 @@ internal fun LastChangeRow(
 
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        // Feste Hoehe in beiden Zustaenden: nach "Zurueckgenommen" fehlt der
+        // Knopf, und die Zeile wurde flacher - das Layout darunter sprang.
+        modifier = modifier.fillMaxWidth().height(52.dp).testTag(LastChangeTags.ROW),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -80,7 +90,7 @@ internal fun LastChangeRow(
                     }
                     append(description)
                 },
-                style = MaterialTheme.typography.bodyMedium,
+                style = RotaskatTextStyles.compact,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -98,8 +108,21 @@ internal fun LastChangeRow(
                 )
             }
             if (!change.undone) {
-                TextButton(onClick = onUndo) { Text("Rückgängig") }
+                TextButton(onClick = onUndo) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_undo),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Rückgängig")
+                }
             }
         }
     }
+}
+
+/** Test-Tag der Zeile. */
+internal object LastChangeTags {
+    const val ROW = "last-change"
 }

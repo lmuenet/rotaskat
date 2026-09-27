@@ -18,12 +18,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,6 +44,7 @@ import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.KeepScreenOn
 import io.rotaskat.app.ui.common.LocalHaptics
 import io.rotaskat.app.ui.common.formatPoints
+import io.rotaskat.app.ui.common.formatShortDate
 import io.rotaskat.app.ui.common.label
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.round.RoundCommitBar
@@ -55,6 +56,7 @@ import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.app.ui.theme.scoreColors
 import io.rotaskat.shared.model.RamschGame
 import io.rotaskat.shared.model.SessionStatus
+import kotlinx.datetime.TimeZone
 
 /**
  * Der laufende Abend.
@@ -151,31 +153,17 @@ fun SessionScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text(if (editRoundId != null) "Runde korrigieren" else "Abend") },
-                navigationIcon = {
-                    if (editRoundId != null) {
-                        TextButton(onClick = { actions.back() }) { Text("Zurück") }
-                    }
-                },
-                actions = {
-                    if (editRoundId == null) {
-                        if (state?.session?.status == SessionStatus.OPEN) {
-                            TextButton(onClick = { confirmEnd = true }) {
-                                Text(if (empty) "Abend verwerfen" else "Abend beenden")
-                            }
-                        } else if (state != null) {
-                            // Der Weg, den der Abend tatsaechlich nimmt: beenden,
-                            // dann sofort abrechnen. Ohne diesen Knopf fuehrte er
-                            // ueber den Zurueckweg in die Uebersicht.
-                            TextButton(onClick = { actions.toSettlement(sessionId) }) {
-                                Text("Abrechnung")
-                            }
-                        }
-                    }
-                },
+            SessionTopBar(
+                title = sessionTitle(state, editRoundId),
+                open = state?.session?.status == SessionStatus.OPEN,
+                editing = editRoundId != null,
+                empty = empty,
+                onBack = { actions.back() },
+                onHistory = { actions.toHistory(sessionId) },
+                onSettlement = { actions.toSettlement(sessionId) },
+                onChangeDealer = { dealerSheet = true },
+                onEnd = { confirmEnd = true },
             )
         },
     ) { padding ->
@@ -203,6 +191,15 @@ fun SessionScreen(
             lastChange = lastChange,
             onUndo = viewModel::undoLastChange,
             showSync = mode == AppMode.CLUB,
+            snackbar = {
+                SnackbarHost(snackbarHostState) { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            },
             // Die Tastatur der Ramsch-Augen schiebt die Ergebnisleiste mit nach
             // oben, statt das zweite und dritte Feld zu verdecken. Das Fenster
             // selbst wird bei targetSdk 35 nicht mehr verkleinert.
@@ -288,6 +285,7 @@ internal fun SessionBody(
     lastChange: LastChange? = null,
     onUndo: () -> Unit = {},
     showSync: Boolean = false,
+    snackbar: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -313,46 +311,50 @@ internal fun SessionBody(
             modifier = Modifier.padding(top = RotaskatDimens.itemSpacing),
         )
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .testTag(SessionTags.SCROLL_AREA)
-                .verticalScroll(scrollState)
-                .padding(top = RotaskatDimens.itemSpacing, bottom = RotaskatDimens.sectionSpacing),
-            verticalArrangement = Arrangement.spacedBy(RotaskatDimens.sectionSpacing),
-        ) {
-            if (state.session.status == SessionStatus.CLOSED) {
-                Text(
-                    text = "Dieser Abend ist beendet. Wer noch eine Runde korrigieren muss: " +
-                        "in der Abrechnung „Abend wieder öffnen“.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                // Die Undo-Zeile sitzt mit dem kleinen Abstand direkt ueber der
-                // Eingabe: sie gehoert dazu und soll die Spitzen nicht unter die
-                // Falz schieben.
-                Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
-                    if (!editing && lastChange != null) {
-                        LastChangeRow(change = lastChange, state = state, names = names, onUndo = onUndo)
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(SessionTags.SCROLL_AREA)
+                    .verticalScroll(scrollState)
+                    .padding(top = RotaskatDimens.itemSpacing, bottom = RotaskatDimens.sectionSpacing),
+                verticalArrangement = Arrangement.spacedBy(RotaskatDimens.sectionSpacing),
+            ) {
+                if (state.session.status == SessionStatus.CLOSED) {
+                    Text(
+                        text = "Dieser Abend ist beendet. Wer noch eine Runde korrigieren muss: " +
+                            "in der Abrechnung „Abend wieder öffnen“.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    // Die Undo-Zeile sitzt mit dem kleinen Abstand direkt ueber der
+                    // Eingabe: sie gehoert dazu und soll die Spitzen nicht unter die
+                    // Falz schieben.
+                    Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+                        if (!editing && lastChange != null) {
+                            LastChangeRow(change = lastChange, state = state, names = names, onUndo = onUndo)
+                        }
+                        RoundEntryPanel(
+                            draft = draft,
+                            seatNames = names,
+                            onDraftChange = onDraftChange,
+                        )
                     }
-                    RoundEntryPanel(
-                        draft = draft,
-                        seatNames = names,
-                        onDraftChange = onDraftChange,
+                }
+
+                if (!editing) {
+                    RoundHistory(
+                        state = state,
+                        names = names,
+                        showSync = showSync,
+                        onEdit = onEditRound,
                     )
                 }
             }
-
-            if (!editing) {
-                RoundHistory(
-                    state = state,
-                    names = names,
-                    showSync = showSync,
-                    onEdit = onEditRound,
-                )
-            }
+            // Fehlermeldungen oben ueber der Eingabe: unten lagen sie genau
+            // ueber "Gewonnen" und "Verloren".
+            Box(Modifier.align(Alignment.TopCenter)) { snackbar() }
         }
 
         // Spielwert und Ergebnisknoepfe liegen AUSSERHALB des
@@ -374,6 +376,28 @@ internal fun SessionBody(
 /** Test-Tags fuer den Layout-Test. */
 internal object SessionTags {
     const val SCROLL_AREA = "session-scroll"
+}
+
+/**
+ * Titel des Abends: Datum und die Runde, die gerade eingegeben wird. In der
+ * Korrektur die Nummer der korrigierten Runde, gezaehlt wie in der Rundenliste.
+ */
+internal fun sessionTitle(
+    state: SessionState?,
+    editRoundId: String?,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): String {
+    if (state == null) return "Abend"
+    if (editRoundId != null) {
+        val number = state.liveRounds.indexOfFirst { it.id == editRoundId } + 1
+        return if (number > 0) "Runde $number korrigieren" else "Runde korrigieren"
+    }
+    val date = formatShortDate(state.session.startedAt, zone)
+    return if (state.session.status == SessionStatus.OPEN) {
+        "$date · Runde ${state.liveRounds.size + 1}"
+    } else {
+        "$date · beendet"
+    }
 }
 
 /**
