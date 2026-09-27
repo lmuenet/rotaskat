@@ -2,7 +2,6 @@ package io.rotaskat.app.ui.round
 
 import androidx.compose.runtime.Immutable
 import io.rotaskat.app.ui.common.label
-import io.rotaskat.app.ui.common.modifierLabels
 import io.rotaskat.shared.model.ContraLevel
 import io.rotaskat.shared.model.Declaration
 import io.rotaskat.shared.model.GrandGame
@@ -516,16 +515,32 @@ data class RoundDraft(
     }
 
     private fun suitDerivation(name: String, base: Int, matadors: Int): String {
-        val levels = modifierLabels(modifiers)
         val level = Scoring.gameLevel(matadors, modifiers)
-        val announcedPart = if (levels.isEmpty()) "" else ", " + levels.joinToString(", ")
-        val regular = "$name mit $matadors$announcedPart = $base x $level = ${base * level}"
+        val levels = shortLevelLabels().joinToString("") { " · $it" }
+        // Ohne "= 36" am Ende: die Zahl steht gross daneben. Die Herleitung
+        // soll pruefbar machen, wie sie zustande kommt, nicht sie wiederholen.
+        val regular = "$name mit $matadors$levels = $base × $level"
         if (!effectiveOverbid) return regular + contraSuffix()
         // Ueberreizt: der regulaere Wert traegt nicht mehr, gerechnet wird mit
         // dem kleinsten Vielfachen des Grundwerts, das den Reizwert erreicht.
         val declaration = declaration ?: return regular
         val overbidValue = Scoring.overbidValue(declaration, bid)
         return "$regular, überreizt auf $bid = $overbidValue" + contraSuffix()
+    }
+
+    /**
+     * Die Stufen in Kurzform: die Ansage und, falls hoeher, das Erreichte.
+     *
+     * Was `normalized()` mitsetzt - Ouvert bringt Hand, Schneider und Schwarz
+     * angesagt mit -, steht bei den Zusaetzen sichtbar umgelegt und steckt in
+     * der Stufenzahl. Es hier noch einmal aufzuzaehlen, liess die Herleitung bei
+     * Ouvert auf drei Zeilen wachsen.
+     */
+    private fun shortLevelLabels(): List<String> = buildList {
+        if (announcement != Announcement.NONE) add(announcement.label)
+        if (effectiveAchieved > achievedFloor) {
+            add(effectiveAchieved.label.replaceFirstChar { it.uppercase() })
+        }
     }
 
     private fun ramschDerivation(): String {
@@ -537,9 +552,9 @@ data class RoundDraft(
         val base = ramsch.pointsOf(loser)
         val parts = buildList {
             add("$base Augen")
-            if (config.jungfrauDoubles && ramsch.jungfrau) add("x 2 (Jungfrau)")
+            if (config.jungfrauDoubles && ramsch.jungfrau) add("× 2 (Jungfrau)")
             if (config.pushDoubles && ramsch.pushes > 0) {
-                add("x ${1 shl ramsch.pushes} (${ramsch.pushes} Schub)")
+                add("× ${1 shl ramsch.pushes} (${ramsch.pushes} Schub)")
             }
         }
         return parts.joinToString(" ") + " = ${gameValue ?: base}"
@@ -547,7 +562,7 @@ data class RoundDraft(
 
     private fun contraSuffix(): String = when (contra) {
         ContraLevel.NONE -> ""
-        else -> " x ${contra.multiplier} (${contra.label}) = ${gameValue ?: 0}"
+        else -> " × ${contra.multiplier} (${contra.label}) = ${gameValue ?: 0}"
     }
 
     companion object {
