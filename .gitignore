@@ -38,3 +38,11 @@ desktop.ini
 
 # --- Logs ---
 *.log
+
+# --- Lokal installierte Agent-Skills (npx skills add ...) ---
+.agents/
+.claude/skills/
+skills-lock.json
+
+# --- Brainstorming-Mockups (superpowers visual companion) ---
+.superpowers/
