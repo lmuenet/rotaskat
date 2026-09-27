@@ -74,4 +74,14 @@ class OptionTileTest {
         node.performClick()
         assertEquals(Suit.CLUBS, picked)
     }
+
+    @Test
+    fun `Kachel mit Rolle Button meldet keine Auswahl`() {
+        compose.setContent {
+            RotaskatTheme { OptionTile(label = "mehr", selected = false, onClick = {}, role = Role.Button) }
+        }
+        compose.onNodeWithText("mehr")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Selected))
+    }
 }

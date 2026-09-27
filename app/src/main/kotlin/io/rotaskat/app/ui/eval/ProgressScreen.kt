@@ -68,14 +68,14 @@ fun ProgressScreen(
 
         EvalSection(
             title = "Verlauf",
-            note = "Waagerecht die Runden, senkrecht der laufende Stand in Punkten. " +
+            subtitle = "Waagerecht die Runden, senkrecht der laufende Stand in Punkten. " +
                 "Die Nulllinie ist stärker gezeichnet.",
         ) {
             PointsChart(series = series)
             ChartLegend(series = series, modifier = Modifier.padding(top = 8.dp))
         }
 
-        EvalSection(title = "Stand", note = counted(current.liveRounds.size, "Runde", "Runden")) {
+        EvalSection(title = "Stand", subtitle = counted(current.liveRounds.size, "Runde", "Runden")) {
             StandingsTable(
                 rows = series
                     .mapIndexed { seat, line ->

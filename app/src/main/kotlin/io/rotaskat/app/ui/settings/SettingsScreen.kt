@@ -156,7 +156,7 @@ private fun RosterSection(
 ) {
     EvalSection(
         title = "Spieler (${roster.size})",
-        note = if (local) null else "Der Kader wird auf dem Server gepflegt.",
+        subtitle = if (local) null else "Der Kader wird auf dem Server gepflegt.",
     ) {
         for (player in roster) {
             Surface(
@@ -216,7 +216,7 @@ private fun RosterSection(
 private fun CentsSection(cents: Int, local: Boolean, onChange: (Int) -> Unit) {
     EvalSection(
         title = "Geld",
-        note = if (local) {
+        subtitle = if (local) {
             "Gilt ab dem nächsten Abend. Laufende und beendete Abende behalten ihren Satz."
         } else {
             "Der Satz wird auf dem Server gepflegt."

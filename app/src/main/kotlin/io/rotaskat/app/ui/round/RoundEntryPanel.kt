@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -255,6 +256,7 @@ private fun MatadorPicker(
                     selected = draft.matadors > MatadorRow.last,
                     onClick = { if (draft.matadors <= MatadorRow.last) onToggleMore() },
                     height = RotaskatDimens.tapTarget,
+                    role = if (draft.matadors > MatadorRow.last) Role.RadioButton else Role.Button,
                     modifier = Modifier.weight(1f),
                 )
             } else {

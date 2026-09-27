@@ -1,6 +1,7 @@
 package io.rotaskat.app.ui.common
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -67,14 +69,14 @@ fun OptionTile(
     enabled: Boolean = true,
     secondaryLabel: String? = null,
     height: Dp = RotaskatDimens.bigTapTarget,
-    selectedColor: Color? = null,
+    role: Role = Role.RadioButton,
 ) {
     TileFrame(
         selected = selected,
         enabled = enabled,
         onClick = onClick,
         height = height,
-        selectedColor = selectedColor,
+        role = role,
         modifier = modifier,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -152,19 +154,19 @@ private fun TileFrame(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = RotaskatDimens.bigTapTarget,
-    selectedColor: Color? = null,
+    role: Role = Role.RadioButton,
     content: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(RotaskatDimens.tileCorner)
     val fill = when {
         !enabled -> colors.surfaceContainerLowest
-        selected -> selectedColor ?: colors.primaryContainer
+        selected -> colors.primaryContainer
         else -> colors.surfaceContainer
     }
     val contentColor = when {
         !enabled -> colors.onSurfaceVariant.copy(alpha = 0.38f)
-        selected -> selectedColor?.let { colors.surface } ?: colors.onPrimaryContainer
+        selected -> colors.onPrimaryContainer
         else -> colors.onSurface
     }
     val border = when {
@@ -182,11 +184,14 @@ private fun TileFrame(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .selectable(
-                    selected = selected,
-                    enabled = enabled,
-                    role = Role.RadioButton,
-                    onClick = onClick,
+                .then(
+                    // Eine Auswahlkachel meldet "ausgewaehlt"; eine Kachel, die nur
+                    // etwas aufklappt ("mehr"), ist ein Knopf und meldet nichts.
+                    if (role == Role.RadioButton) {
+                        Modifier.selectable(selected = selected, enabled = enabled, role = role, onClick = onClick)
+                    } else {
+                        Modifier.clickable(enabled = enabled, role = role, onClick = onClick)
+                    },
                 )
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.Center,
@@ -222,7 +227,7 @@ fun OptionGrid(
     spacing: Dp = RotaskatDimens.itemSpacing,
     item: @Composable RowScope.(index: Int) -> Unit,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
+    Column(modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(spacing)) {
         val rowCount = (itemCount + columns - 1) / columns
         for (row in 0 until rowCount) {
             Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {

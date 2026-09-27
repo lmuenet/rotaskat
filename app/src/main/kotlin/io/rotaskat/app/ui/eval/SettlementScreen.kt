@@ -179,7 +179,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 
     EvalSection(
         title = "Zahlungen",
-        note = "So wenige Zahlungen wie möglich - nicht jeder mit jedem.",
+        subtitle = "So wenige Zahlungen wie möglich - nicht jeder mit jedem.",
     ) {
         if (settlement.payments.isEmpty()) {
             Notice("Alles ausgeglichen. Heute zahlt niemand.")
@@ -194,7 +194,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 
     EvalSection(
         title = "Salden",
-        note = "${state.session.centsPerPoint} Cent je Punkt, am Anpfiff dieses Abends " +
+        subtitle = "${state.session.centsPerPoint} Cent je Punkt, am Anpfiff dieses Abends " +
             "festgehalten. Plus heißt bekommt, Minus heißt zahlt.",
     ) {
         BalanceTable(settlement = settlement, names = names, state = state)
@@ -207,7 +207,7 @@ private fun SettlementBody(state: SessionState, names: Map<Int, String>) {
 private fun Endstand(state: SessionState, names: Map<Int, String>) {
     EvalSection(
         title = "Endstand",
-        note = counted(state.liveRounds.size, "Runde", "Runden"),
+        subtitle = counted(state.liveRounds.size, "Runde", "Runden"),
     ) {
         StandingsTable(
             rows = (0 until state.session.seatCount)

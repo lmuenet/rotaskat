@@ -52,7 +52,7 @@ fun LeaderboardScreen(
 
         EvalSection(
             title = "Punkte",
-            note = "Jede Quote steht mit der Anzahl dahinter. Ohne sie ist sie nicht zu lesen.",
+            subtitle = "Jede Quote steht mit der Anzahl dahinter. Ohne sie ist sie nicht zu lesen.",
         ) {
             StandingsTable(rows = standings.map { it.toRow() })
         }

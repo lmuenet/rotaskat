@@ -79,7 +79,7 @@ fun StatsScreen(
 @Composable
 private fun PlayerStatsCards(stats: PlayerStats) {
     Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
-        StatCard(
+        StatTile(
             label = "Punkte",
             value = formatPoints(stats.halfPoints),
             detail = counted(stats.sessions, "Abend", "Abende") + ", " + counted(stats.rounds, "Runde", "Runden") + " mitgespielt",
@@ -89,7 +89,7 @@ private fun PlayerStatsCards(stats: PlayerStats) {
         // verreizt hat, hat das Spiel verloren, auch wenn die Stiche gereicht
         // haetten.
         val rate = stats.soloWinRate
-        StatCard(
+        StatTile(
             label = "Gewinnquote als Alleinspieler",
             value = if (rate == null) "kein Alleinspiel" else formatPercent(rate),
             detail = if (rate == null) {
@@ -105,7 +105,7 @@ private fun PlayerStatsCards(stats: PlayerStats) {
         )
 
         val favourites = stats.favouriteGames
-        StatCard(
+        StatTile(
             label = "Häufigstes Alleinspiel",
             value = if (favourites.isEmpty()) "keines" else favourites.joinToString(" und ") { it.label },
             detail = if (favourites.isEmpty()) {
@@ -119,21 +119,21 @@ private fun PlayerStatsCards(stats: PlayerStats) {
         )
 
         val average = stats.averageHalfPointsPerRound
-        StatCard(
+        StatTile(
             label = "Durchschnitt je Runde",
             value = if (average == null) "keine Runde" else "${formatAverage(average)} Punkte",
             detail = if (average == null) null else "aus " + counted(stats.rounds, "Runde", "Runden"),
         )
 
         val best = stats.bestSession
-        StatCard(
+        StatTile(
             label = "Bester Abend",
             value = if (best == null) "keiner" else formatPoints(best.halfPoints),
             detail = best?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
         )
 
         val worst = stats.worstSession
-        StatCard(
+        StatTile(
             label = "Schlechtester Abend",
             value = if (worst == null) "keiner" else formatPoints(worst.halfPoints),
             detail = worst?.let { "${formatDate(it.startedAt)}, ${counted(it.rounds, "Runde", "Runden")}" },
