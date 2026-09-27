@@ -51,6 +51,25 @@ class RamschEntryTest {
         assertFalse(d.readyForResult, "Summe 130 statt 120 darf nicht gespeichert werden")
     }
 
+    /**
+     * Auf dem Geraet gefunden: wer das berechnete Feld leerte, um selbst zu
+     * tippen, bekam sofort wieder die 20 hinein - und das Weitertippen haengte
+     * an die 20 an ("102").
+     */
+    @Test
+    fun `das geleerte berechnete Feld bleibt leer und nimmt die eigene Zahl`() {
+        var d = draft().withRamschPoints(0, "60").withRamschPoints(1, "40")
+        d = d.withRamschPoints(2, "")
+        assertFalse(d.ramsch.entered(2), "Die eigene Loeschung wird nicht ueberschrieben")
+        assertNull(d.ramsch.autoSeat)
+
+        d = d.withRamschPoints(2, "3").withRamschPoints(2, "30")
+        assertEquals("30", d.ramsch.cardPoints[2])
+        assertFalse(d.readyForResult, "60 + 40 + 30 ist keine gueltige Summe")
+        assertNull(d.displayedGameValue)
+        assertEquals("Summe stimmt nicht", d.derivation(), "Kein Wert neben dem Strich")
+    }
+
     @Test
     fun `wird ein Feld wieder geleert, verschwindet die Ergaenzung`() {
         val d = draft().withRamschPoints(0, "60").withRamschPoints(1, "40").withRamschPoints(1, "")

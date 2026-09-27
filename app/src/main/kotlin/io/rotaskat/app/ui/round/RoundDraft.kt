@@ -457,7 +457,11 @@ data class RoundDraft(
         if (seat == next.autoSeat) next = next.copy(autoSeat = null)
 
         val auto = next.autoSeat
-        val candidate = auto ?: activeSeats.filterNot { next.entered(it) }.singleOrNull()
+        // Das Feld, das gerade getippt wird, ergaenzt die App nie selbst. Sonst
+        // fuellte sie ein bewusst geleertes Feld sofort wieder auf, und die
+        // naechste Ziffer haengte sich an die eingesetzte Zahl ("102").
+        val candidate = (auto ?: activeSeats.filterNot { next.entered(it) }.singleOrNull())
+            ?.takeIf { it != seat }
         if (candidate != null) {
             val others = activeSeats.filter { it != candidate }
             val rest = Scoring.MAX_CARD_POINTS - others.sumOf { next.pointsOf(it) }
@@ -528,6 +532,7 @@ data class RoundDraft(
         val durchmarsch = ramsch.durchmarschSeat
         if (durchmarsch != null) return "Durchmarsch = ${config.durchmarschValue}"
         if (!editing && !ramsch.complete(activeSeats)) return "Augen fehlen noch"
+        if (!ramschReady) return "Summe stimmt nicht"
         val loser = ramsch.loser(activeSeats) ?: return "Gleichstand – Verlierer wählen"
         val base = ramsch.pointsOf(loser)
         val parts = buildList {
