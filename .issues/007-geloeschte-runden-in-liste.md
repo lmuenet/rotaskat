@@ -3,7 +3,7 @@ titel: Gelöschte und zurückgenommene Runden bleiben in der Liste stehen, Numme
 typ: UX
 schwere: mittel
 bereich: Abend (RoundHistory)
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -31,3 +31,12 @@ Der Tombstone ist für den Sync richtig (SCOPE.md: „Loeschen ist ein
 - Ein Undo direkt nach dem Speichern, bevor die Runde synchronisiert wurde,
   kann die Runde lokal ganz entfernen statt einen Tombstone anzulegen.
   Dabei den Sync-Vertrag prüfen.
+
+## Umsetzung
+
+- `RoundHistory` zeigt nur `liveRounds`, die Nummer kommt aus der Position.
+- Bei „überreizt“ steht das Gebot mit in der Zeile (Punkt aus #010).
+- Nicht umgesetzt: Undo direkt nach dem Speichern physisch löschen. Laut
+  `RotaskatRepository` wird nie physisch gelöscht, weil der Delta-Pull die
+  Runde sonst zurückbrächte (siehe `TombstoneResurrectionTest`). Da der
+  Tombstone jetzt unsichtbar ist, bringt das Entfernen am Tisch nichts mehr.

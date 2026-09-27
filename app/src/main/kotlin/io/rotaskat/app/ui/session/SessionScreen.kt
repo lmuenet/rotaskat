@@ -390,6 +390,11 @@ private fun Scoreboard(state: SessionState, names: Map<Int, String>, modifier: M
  * Jede Zeile ist antippbar und fuehrt in dieselbe Eingabe zurueck. Eine
  * Korrektur ist damit genauso schnell wie eine Neueingabe, und das ist die
  * Voraussetzung dafuer, dass die Eingabe ohne Bestaetigungsdialoge auskommt.
+ *
+ * Geloeschte Runden stehen NICHT in der Liste. Der Tombstone ist fuer den Sync
+ * da, nicht fuer den Tisch - eine zurueckgenommene Runde wurde aus Sicht der
+ * Spieler nie gespielt. Die Nummer kommt deshalb aus der Position unter den
+ * lebenden Runden und nicht aus `sequence`, sonst haette die Liste Luecken.
  */
 @Composable
 private fun RoundHistory(
@@ -397,32 +402,31 @@ private fun RoundHistory(
     names: Map<Int, String>,
     onEdit: (String) -> Unit,
 ) {
-    if (state.rounds.isEmpty()) return
+    val live = state.liveRounds
+    if (live.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
         Text(
-            text = "Runden (${state.liveRounds.size})",
+            text = "Runden (${live.size})",
             style = MaterialTheme.typography.titleSmall,
         )
-        for (round in state.rounds.sortedByDescending { it.sequence }) {
-            RoundRow(round = round, names = names, onEdit = onEdit)
+        for ((index, round) in live.withIndex().reversed()) {
+            RoundRow(round = round, number = index + 1, names = names, onEdit = onEdit)
         }
     }
 }
 
 @Composable
-private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (String) -> Unit) {
+private fun RoundRow(
+    round: ScoredRound,
+    number: Int,
+    names: Map<Int, String>,
+    onEdit: (String) -> Unit,
+) {
     val colors = MaterialTheme.scoreColors
-    val subject = round.round.declarerSeat ?: round.round.ramsch?.loserSeat
+    val subject = round.round.subjectSeat
     val half = subject?.let { round.score.halfPoints[it] } ?: 0
-    val outcome = when {
-        round.round.declaration is RamschGame -> "Ramsch"
-        round.round.overbid -> "überreizt"
-        round.round.won -> "gewonnen"
-        else -> "verloren"
-    }
     Surface(
         onClick = { onEdit(round.id) },
-        enabled = !round.deleted,
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
@@ -432,7 +436,7 @@ private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (Strin
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Text(
-                text = "${round.sequence + 1}",
+                text = "$number",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 12.dp),
@@ -449,10 +453,9 @@ private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (Strin
                     // im Kneipenlicht kein Ausgang.
                     text = buildString {
                         append(names[subject] ?: "Platz ?")
-                        append(" - ")
-                        append(outcome)
-                        if (round.deleted) append(" - gelöscht")
-                        if (round.pendingSync) append(" - wartet auf Sync")
+                        append(" · ")
+                        append(round.round.outcomeLabel())
+                        if (round.pendingSync) append(" · wartet auf Sync")
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -460,10 +463,9 @@ private fun RoundRow(round: ScoredRound, names: Map<Int, String>, onEdit: (Strin
                 )
             }
             Text(
-                text = if (round.deleted) "-" else formatPoints(half),
+                text = formatPoints(half),
                 style = RotaskatTextStyles.scoreMedium,
                 color = when {
-                    round.deleted -> colors.sittingOut
                     half > 0 -> colors.gain
                     half < 0 -> colors.loss
                     else -> colors.neutral
