@@ -43,25 +43,19 @@ fun LeaderboardScreen(
         PeriodSelector(seasons = seasons, selected = period, onSelect = viewModel::setPeriod)
 
         if (standings.isEmpty()) {
-            Notice(
-                "Für diesen Zeitraum ist noch kein Abend erfasst. Die Rangliste " +
-                    "entsteht aus den gespielten Runden, nicht aus dem Kader.",
-            )
+            Notice("Noch kein Abend in diesem Zeitraum.")
             return@EvalScaffold
         }
 
         EvalSection(
             title = "Punkte",
-            subtitle = "Jede Quote steht mit der Anzahl dahinter. Ohne sie ist sie nicht zu lesen.",
+            info = "Die Quote zählt nur Spiele als Alleinspieler. Die Zahl in Klammern ist " +
+                "die Grundlage – aus wenigen Spielen sagt die Quote wenig. Gezählt werden " +
+                "alle Runden, auch die des laufenden Abends, jede mit den Hausregeln ihres " +
+                "Abends.",
         ) {
             StandingsTable(rows = standings.map { it.toRow() })
         }
-
-        Notice(
-            "Gezählt werden alle nicht gelöschten Runden, auch die des laufenden " +
-                "Abends. Jeder Abend rechnet mit den Hausregeln, die zu seinem Anpfiff " +
-                "galten.",
-        )
     }
 }
 
@@ -72,21 +66,20 @@ fun LeaderboardScreen(
  * niemand liest. Deshalb steht die Punktzahl gross rechts und alles, was sie
  * einordnet, klein unter dem Namen.
  */
-private fun PlayerStats.toRow(): StandingRow = StandingRow(
+internal fun PlayerStats.toRow(): StandingRow = StandingRow(
     key = player.id,
     name = player.displayName,
     halfPoints = halfPoints,
     detail = buildString {
         append(counted(sessions, "Abend", "Abende"))
-        append(" - ")
+        append(" \u00B7 ")
         append(counted(rounds, "Runde", "Runden"))
-        append(" - allein ")
+        append(" \u00B7 allein ")
         val rate = soloWinRate
         if (rate == null) {
             append("nie")
         } else {
-            // Geschuetzte Leerzeichen: die Klammer bricht sonst mitten in "2 von 2" um.
-            append("${formatPercent(rate)}\u00A0($soloWins\u00A0von\u00A0$soloRounds)")
+            append("${formatPercent(rate)} ($soloWins/$soloRounds)")
         }
     },
 )

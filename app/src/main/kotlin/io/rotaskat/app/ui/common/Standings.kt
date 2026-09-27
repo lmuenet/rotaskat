@@ -1,5 +1,6 @@
 package io.rotaskat.app.ui.common
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,9 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
+import io.rotaskat.app.ui.theme.accentColors
 import io.rotaskat.app.ui.theme.scoreColors
 
 /**
@@ -48,7 +51,7 @@ data class StandingRow(
  * Dieselben Regeln wie ueberall: Tabellenziffern, immer ein Vorzeichen, Farbe
  * nur als Zweitkanal. Der Rang ist dicht vergeben - gleiche Punktzahl heisst
  * gleicher Rang, sonst behauptet die Tabelle eine Reihenfolge, die das Spiel
- * nicht hergibt.
+ * nicht hergibt. Der erste Rang steht in Gold.
  */
 @Composable
 fun StandingsTable(
@@ -60,8 +63,9 @@ fun StandingsTable(
     if (rows.isEmpty()) return
     val colors = MaterialTheme.scoreColors
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(RotaskatDimens.cardCorner),
         color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.fillMaxWidth(),
     ) {
         Column {
@@ -92,8 +96,12 @@ fun StandingsTable(
                     if (showRank) {
                         Text(
                             text = "$rank.",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = RotaskatTextStyles.compact,
+                            color = if (rank == 1) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.accentColors.labelMuted
+                            },
                             textAlign = TextAlign.End,
                             modifier = Modifier.width(26.dp),
                         )
@@ -110,8 +118,9 @@ fun StandingsTable(
                     Column(Modifier.weight(1f)) {
                         Text(
                             text = row.name,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = RotaskatTextStyles.compact,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         if (row.detail != null) {
                             Text(
