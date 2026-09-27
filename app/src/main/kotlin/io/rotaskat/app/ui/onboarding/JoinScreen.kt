@@ -1,10 +1,12 @@
 package io.rotaskat.app.ui.onboarding
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -172,7 +174,8 @@ private fun EntryStep(
         enabled = serverUrl.isNotBlank() && inviteCode.isNotBlank(),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = RotaskatDimens.sectionSpacing),
+            .padding(top = RotaskatDimens.sectionSpacing)
+            .heightIn(min = RotaskatDimens.tapTarget),
     ) { Text("Weiter") }
 }
 
@@ -195,25 +198,11 @@ private fun ChoosePlayerStep(
     )
 
     roster.forEach { player ->
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = if (player.id == selected) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainer
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .selectable(selected = player.id == selected, onClick = { selected = player.id }),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            ) {
-                RadioButton(selected = player.id == selected, onClick = { selected = player.id })
-                Text(player.displayName, Modifier.padding(start = 8.dp))
-            }
-        }
+        PlayerPickRow(
+            label = player.displayName,
+            selected = player.id == selected,
+            onClick = { selected = player.id },
+        )
     }
 
     OutlinedTextField(
@@ -234,7 +223,8 @@ private fun ChoosePlayerStep(
         enabled = selected != null,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp),
+            .padding(top = RotaskatDimens.sectionSpacing, bottom = 24.dp)
+            .heightIn(min = RotaskatDimens.tapTarget),
     ) { Text("Beitreten") }
 }
 
@@ -265,25 +255,11 @@ private fun MapPlayersStep(
         SectionLabel(local.displayName, Modifier.padding(top = RotaskatDimens.itemSpacing))
         state.club.roster.forEach { member ->
             val chosen = state.mapping[local.id] == member.id
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = if (chosen) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(selected = chosen, onClick = { onAssign(local.id, member.id) }),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    RadioButton(selected = chosen, onClick = { onAssign(local.id, member.id) })
-                    Text(member.displayName, Modifier.padding(start = 8.dp))
-                }
-            }
+            PlayerPickRow(
+                label = member.displayName,
+                selected = chosen,
+                onClick = { onAssign(local.id, member.id) },
+            )
         }
     }
 
@@ -294,14 +270,16 @@ private fun MapPlayersStep(
         enabled = state.complete,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = RotaskatDimens.sectionSpacing),
+            .padding(top = RotaskatDimens.sectionSpacing)
+            .heightIn(min = RotaskatDimens.tapTarget),
     ) { Text("Abende übernehmen") }
 
     OutlinedButton(
         onClick = onDiscard,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp),
+            .padding(bottom = 24.dp)
+            .heightIn(min = RotaskatDimens.tapTarget),
     ) { Text("Verwerfen und neu anfangen") }
 
     Text(
@@ -315,7 +293,7 @@ private fun MapPlayersStep(
 @Composable
 private fun ErrorNote(text: String) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(RotaskatDimens.cardCorner),
         color = MaterialTheme.colorScheme.errorContainer,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -325,5 +303,44 @@ private fun ErrorNote(text: String) {
             color = MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
         )
+    }
+}
+
+/**
+ * Eine Spielerzeile beim Beitritt, im Kartentisch-Look wie [io.rotaskat.app.ui.common.OptionTile]:
+ * Flaeche mit Rand statt Fliesstext, ausgewaehlt mit Goldrand und -fuellung.
+ *
+ * Der Radiobutton bekommt `onClick = null` - die Flaeche selbst ist
+ * `selectable` und meldet Rolle und Auswahl. Mit einem eigenen Klick auf dem
+ * Radiobutton waere die Zeile fuer TalkBack zwei Fokusstopps statt einem.
+ */
+@Composable
+internal fun PlayerPickRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val border = if (selected) {
+        BorderStroke(RotaskatDimens.selectedBorder, colors.primary)
+    } else {
+        BorderStroke(1.dp, colors.outlineVariant)
+    }
+    Surface(
+        shape = RoundedCornerShape(RotaskatDimens.tileCorner),
+        color = if (selected) colors.primaryContainer else colors.surfaceContainer,
+        border = border,
+        modifier = modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onClick),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+        ) {
+            RadioButton(selected = selected, onClick = null)
+            Text(label, Modifier.padding(start = 8.dp))
+        }
     }
 }
