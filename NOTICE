@@ -15,6 +15,9 @@ Barlow Semi Condensed (https://github.com/google/fonts/tree/main/ofl/barlowsemic
 Material Icons (https://github.com/google/material-design-icons), Apache License 2.0
     Pfaddaten der Icons in app/src/main/res/drawable/ic_*.xml.
 
+Material Design Icons (Pictogrammers, https://github.com/Templarian/MaterialDesign), Apache License 2.0
+    Pfaddaten der Farbsymbole in app/src/main/res/drawable/ic_suit_*.xml.
+
 Geplant ist:
 
 JSkat (https://github.com/b0n541/jskat), Apache License 2.0

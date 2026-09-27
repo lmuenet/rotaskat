@@ -13,6 +13,8 @@ import io.rotaskat.app.data.suitRound
 import io.rotaskat.app.ui.theme.RotaskatTheme
 import io.rotaskat.shared.model.Session
 import io.rotaskat.shared.scoring.Scoring
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,5 +90,16 @@ class LiveSessionCardTest {
         assertEquals("Gleichstand", winnerLabel(listOf("Anna" to 10L, "Ben" to 10L, "Lars" to -20L)))
         assertEquals("Anna", winnerLabel(listOf("Anna" to 12L, "Ben" to 10L)))
         assertEquals("Gleichstand", winnerLabel(listOf("Anna" to 0L, "Ben" to 0L, "Lars" to 0L)))
+    }
+
+    @Test
+    fun `sinceLabel zeigt am selben Tag die Uhrzeit, sonst das Kurzdatum`() {
+        // Dieselben T0-artigen Instants wie in EvalFormatTest.
+        val saturdayEvening = Instant.parse("2026-03-14T19:30:00Z")
+        val laterSameDay = Instant.parse("2026-03-14T21:00:00Z")
+        val nextDay = Instant.parse("2026-03-15T08:00:00Z")
+
+        assertEquals("seit 19:30", sinceLabel(saturdayEvening, laterSameDay, TimeZone.UTC))
+        assertEquals("seit Sa 14.3.", sinceLabel(saturdayEvening, nextDay, TimeZone.UTC))
     }
 }

@@ -56,17 +56,22 @@ internal fun LastChangeRow(
         change.kind == LastChange.Kind.CORRECTED -> "Geändert"
         else -> "Gelöscht"
     }
-    val description = buildString {
-        append(names[subject] ?: "Platz ?")
-        append(" · ")
-        append(round.declaration.label())
-        append(" · ")
-        append(round.outcomeLabel())
-    }
     val half = subject?.let { seat ->
         runCatching { Scoring.score(round, state.session.scoring).halfPoints[seat] }.getOrNull()
     }
     val showPoints = half != null && !change.undone && change.kind != LastChange.Kind.DELETED
+    // Das Vorzeichen der Punkte sagt schon, ob gewonnen oder verloren wurde -
+    // steht die Zahl daneben, waere das Ausgangswort eine Wiederholung, die
+    // genau auf einem 411dp-Telefon den Text abschneidet.
+    val description = buildString {
+        append(names[subject] ?: "Platz ?")
+        append(" · ")
+        append(round.declaration.label())
+        if (!showPoints) {
+            append(" · ")
+            append(round.outcomeLabel())
+        }
+    }
     val colors = MaterialTheme.scoreColors
 
     Surface(

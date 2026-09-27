@@ -34,12 +34,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.app.ui.theme.accentColors
@@ -100,8 +100,10 @@ fun OptionTile(
  * Karo, Herz, Pik oder Kreuz: das Symbol gross, darunter klein der Name.
  *
  * Das Symbol erkennt man schneller als das Wort, gerade bei schlechtem Licht.
+ * Es ist ein Vector-Drawable, kein Unicode-Zeichen: Android zeichnet Karo,
+ * Herz, Pik und Kreuz sonst als farbiges Emoji und ignoriert den Kupferton.
  * Der Name bleibt fuer Neulinge und fuer TalkBack stehen; vorgelesen wird nur
- * er, nicht das Zeichen "♣".
+ * er, nicht das Symbol.
  */
 @Composable
 fun SuitTile(
@@ -117,12 +119,11 @@ fun SuitTile(
     }
     TileFrame(selected = selected, enabled = true, onClick = onClick, modifier = modifier) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = suit.symbol,
-                color = symbolColor,
-                fontSize = 26.sp,
-                lineHeight = 28.sp,
-                modifier = Modifier.clearAndSetSemantics { },
+            Icon(
+                painter = painterResource(suit.icon),
+                contentDescription = null,
+                tint = symbolColor,
+                modifier = Modifier.size(26.dp).clearAndSetSemantics { },
             )
             Text(
                 text = suit.label,
@@ -256,7 +257,7 @@ fun <T> ScaleSelector(
     modifier: Modifier = Modifier,
     floorIndex: Int = 0,
     columns: Int? = null,
-    forcedHint: String = "durch die Ansage gesetzt",
+    forcedHint: String = "durch Ansage",
 ) {
     val effectiveColumns = columns ?: 1
     OptionGrid(columns = effectiveColumns, itemCount = options.size, modifier = modifier) { index ->

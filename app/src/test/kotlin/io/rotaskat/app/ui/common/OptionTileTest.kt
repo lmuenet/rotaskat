@@ -2,14 +2,13 @@ package io.rotaskat.app.ui.common
 
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.foundation.layout.Row
@@ -67,8 +66,12 @@ class OptionTileTest {
                 SuitTile(suit = Suit.CLUBS, selected = true, onClick = { picked = Suit.CLUBS })
             }
         }
-        compose.onNodeWithText("Kreuz").assertIsSelected().assert(radio).performClick()
-        compose.onAllNodesWithText("♣").assertCountEquals(0)
+        val node = compose.onNodeWithText("Kreuz").assertIsSelected().assert(radio)
+        // Das Farbsymbol ist ein Vector-Drawable ohne eigene Beschreibung -
+        // die zusammengefuehrte Vorlesung darf deshalb nur den Namen enthalten.
+        val mergedText = node.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)
+        assertEquals(listOf("Kreuz"), mergedText?.map { it.text })
+        node.performClick()
         assertEquals(Suit.CLUBS, picked)
     }
 }

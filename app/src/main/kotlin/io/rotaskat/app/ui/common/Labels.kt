@@ -1,5 +1,7 @@
 package io.rotaskat.app.ui.common
 
+import androidx.annotation.DrawableRes
+import io.rotaskat.app.R
 import io.rotaskat.shared.model.ContraLevel
 import io.rotaskat.shared.model.Declaration
 import io.rotaskat.shared.model.GrandGame
@@ -25,13 +27,19 @@ val Suit.label: String
         Suit.CLUBS -> "Kreuz"
     }
 
-/** Das Farbsymbol, wie es auf der Karte steht. */
-val Suit.symbol: String
-    get() = when (this) {
-        Suit.DIAMONDS -> "♦"
-        Suit.HEARTS -> "♥"
-        Suit.SPADES -> "♠"
-        Suit.CLUBS -> "♣"
+/**
+ * Das Farbsymbol als Vector-Drawable, nicht als Zeichen.
+ *
+ * Die Unicode-Zeichen ♦♥♠♣ rendern auf Android als farbige Emoji - Karo und
+ * Herz kommen dann grell rot, unabhaengig vom Kupferton der Oberflaeche, und
+ * verletzen damit die Regel, dass Rot nur Gewinn/Verlust markiert.
+ */
+val Suit.icon: Int
+    @DrawableRes get() = when (this) {
+        Suit.DIAMONDS -> R.drawable.ic_suit_diamonds
+        Suit.HEARTS -> R.drawable.ic_suit_hearts
+        Suit.SPADES -> R.drawable.ic_suit_spades
+        Suit.CLUBS -> R.drawable.ic_suit_clubs
     }
 
 val NullVariant.label: String

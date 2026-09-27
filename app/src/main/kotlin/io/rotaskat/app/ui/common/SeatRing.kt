@@ -26,6 +26,13 @@ import kotlin.math.sin
  * Platz 0 sitzt unten, also dort, wo das Geraet liegt. Die weiteren Plaetze
  * laufen im Uhrzeigersinn - in derselben Richtung, in der auch der Geber
  * weiterwandert.
+ *
+ * [center] ist optional: liefert er nichts (Standardfall, etwa `DealerPicker`),
+ * komponiert er auch keinen Messbaren. Ob eine Mitte da ist, wird deshalb aus
+ * der Anzahl der Messbaren erkannt, nicht daraus, dass "der erste Messbare
+ * immer die Mitte ist" - sonst landete ohne Mitte Platz 0 dort, wo die Mitte
+ * haette sein sollen, und die uebrigen Plaetze bildeten ein Dreieck statt
+ * eines Vierecks.
  */
 @Composable
 fun SeatRing(
@@ -49,6 +56,11 @@ fun SeatRing(
         val childConstraints = Constraints(maxWidth = slot, maxHeight = slot)
         val placeables = measurables.map { it.measure(childConstraints) }
 
+        // Ob eine Mitte komponiert wurde, steht nicht in der Reihenfolge,
+        // sondern in der Anzahl: sind mehr Messbare da als Plaetze, ist die
+        // Mitte die erste - liefert [center] nichts, sind es genau [seatCount].
+        val hasCenter = placeables.size > seatCount
+
         // Der Radius laesst den halben Kachelrand innen, damit keine Kachel ueber
         // die Kante des Rings hinausragt.
         val radius = min(width, height) / 2.0 - slot / 2.0
@@ -57,14 +69,15 @@ fun SeatRing(
             val centerX = width / 2.0
             val centerY = height / 2.0
 
-            placeables.firstOrNull()?.let { middle ->
+            if (hasCenter) {
+                val middle = placeables.first()
                 middle.place(
                     (centerX - middle.width / 2.0).roundToInt(),
                     (centerY - middle.height / 2.0).roundToInt(),
                 )
             }
 
-            val seats = placeables.drop(1)
+            val seats = placeables.takeLast(seatCount)
             seats.forEachIndexed { index, placeable ->
                 // Bildschirmkoordinaten: y waechst nach unten, PI/2 ist also
                 // unten. Wachsende Winkel laufen damit im Uhrzeigersinn.

@@ -6,26 +6,35 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.rotaskat.app.R
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.common.formatPoints
+import io.rotaskat.app.ui.common.formatShortDate
 import io.rotaskat.app.ui.common.formatTime
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
 import io.rotaskat.app.ui.theme.accentColors
 import io.rotaskat.app.ui.theme.scoreColors
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Ob die oberen beiden Plaetze der (absteigend sortierten) Rangliste
@@ -36,6 +45,23 @@ private fun topIsTied(sorted: List<Pair<String, Long>>): Boolean {
     val first = sorted.getOrNull(0) ?: return false
     val second = sorted.getOrNull(1) ?: return false
     return second.second == first.second
+}
+
+/**
+ * "seit HH:MM" fuer einen Abend von heute, sonst "seit <Kurzdatum>".
+ *
+ * Eine Uhrzeit ohne Datum ist nur so lange eindeutig, wie der Abend heute
+ * begonnen hat. Laeuft er seit einem fruehreren Tag, waere "seit 18:14" eine
+ * falsche Aussage ueber die Dauer.
+ */
+internal fun sinceLabel(startedAt: Instant, now: Instant, zone: TimeZone): String {
+    val startedDate = startedAt.toLocalDateTime(zone).date
+    val nowDate = now.toLocalDateTime(zone).date
+    return if (startedDate == nowDate) {
+        "seit ${formatTime(startedAt, zone)}"
+    } else {
+        "seit ${formatShortDate(startedAt, zone)}"
+    }
 }
 
 /**
@@ -95,18 +121,31 @@ internal fun LiveSessionCard(
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "♣ Abend läuft",
-                    style = RotaskatTextStyles.sectionLabel,
-                    color = colors.primary,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     // Ohne das faende TalkBack im Kleeblatt ein eigenes,
                     // unverstaendliches Zeichen zum Vorlesen.
                     modifier = Modifier
                         .weight(1f)
                         .clearAndSetSemantics { contentDescription = "Abend läuft" },
-                )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_suit_clubs),
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = "Abend läuft",
+                        style = RotaskatTextStyles.sectionLabel,
+                        color = colors.primary,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
                 Text(
-                    text = "Runde ${state.liveRounds.size + 1} · seit ${formatTime(state.session.startedAt)}",
+                    text = "Runde ${state.liveRounds.size + 1} · ${
+                        sinceLabel(state.session.startedAt, Clock.System.now(), TimeZone.currentSystemDefault())
+                    }",
                     style = MaterialTheme.typography.labelSmall,
                     color = accent.labelMuted,
                 )

@@ -1,8 +1,10 @@
 package io.rotaskat.app.ui.session
 
 import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.data.T0
@@ -47,5 +49,13 @@ class LastChangeRowTest {
     fun `zurueckgenommen hat dieselbe Hoehe`() {
         show(undone = true)
         compose.onNodeWithTag(LastChangeTags.ROW).assertHeightIsEqualTo(52.dp)
+    }
+
+    @Test
+    fun `gespeichert mit Punkten nennt das Ausgangswort nicht mehr`() {
+        // Das Vorzeichen der Punkte sagt schon, ob gewonnen oder verloren
+        // wurde; auf einem 411dp-Telefon schnitt "Kre..." sonst das Spiel ab.
+        show(undone = false)
+        compose.onNodeWithText("Gespeichert: Johannes · Kreuz mit 2").assertIsDisplayed()
     }
 }
