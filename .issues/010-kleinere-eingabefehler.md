@@ -3,7 +3,7 @@ titel: Kleinere Eingabe-Unstimmigkeiten (Korrektur, Null, Geber)
 typ: UX
 schwere: niedrig
 bereich: Rundeneingabe
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -40,3 +40,14 @@ Entwurf und Anzeige in einem Schritt zurücksetzen.
 
 In der Rundenliste steht „Karo mit 1 · Alex - ueberreizt“, aber nicht, bis wohin
 gereizt wurde. Beim späteren Nachvollziehen fehlt genau diese Zahl.
+
+## Umsetzung
+
+- Korrektur: der gespeicherte Ausgang trägt einen Rahmen und „· bisher“
+  (`RoundDraft.originalWon`).
+- Null: „Null 23“ ist vorgewählt, der Hinweis nennt fehlende Angaben korrekt
+  (`RoundDraft.missingHint`, kam mit #003).
+- Geber: die Auswahl sitzt jetzt im Kopf der Spielerauswahl, ein Tap auf den
+  Geber schließt sie (#003). Auf dem Gerät gegenprüfen.
+- Zwischenzustand nach dem Speichern: Entwurf wechselt in einem Schritt (#009).
+- Überreizt-Runde zeigt das Gebot in der Liste (#007).

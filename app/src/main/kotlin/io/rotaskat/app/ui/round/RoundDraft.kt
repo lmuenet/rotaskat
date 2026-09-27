@@ -198,6 +198,12 @@ data class RoundDraft(
     val ramsch: RamschDraft = RamschDraft(),
     /** Eine bestehende Runde wird korrigiert statt eine neue angelegt. */
     val editing: Boolean = false,
+    /**
+     * Der gespeicherte Ausgang einer korrigierten Runde. Die Oberflaeche
+     * markiert ihn als "bisher" - sonst sieht man beim Korrigieren nicht, was
+     * urspruenglich eingetragen war. `null` bei neuen Runden und beim Ramsch.
+     */
+    val originalWon: Boolean? = null,
 ) {
 
     val sittingOutSeat: Int? get() = if (seatCount == 4) dealerSeat else null
@@ -339,7 +345,9 @@ data class RoundDraft(
         val next = copy(game = pick)
         return when (pick) {
             GamePick.Ramsch -> next.copy(declarerSeat = null)
-            GamePick.Null -> next.copy(overbid = false, bid = Scoring.MIN_BID)
+            // Die einfache Null ist vorgewaehlt: Null ist damit wirklich der
+            // Zwei-Tap-Sonderweg aus SCOPE.md, die anderen Varianten sind ein Tap mehr.
+            GamePick.Null -> next.copy(overbid = false, bid = Scoring.MIN_BID, nullVariant = nullVariant ?: NullVariant.NULL)
             else -> next.copy(matadors = matadors.coerceIn(1, next.matadorOptions.last()))
         }
     }
@@ -622,6 +630,7 @@ data class RoundDraft(
                     )
                 } ?: RamschDraft(),
                 editing = true,
+                originalWon = round.won.takeIf { declaration !is RamschGame },
             )
         }
 

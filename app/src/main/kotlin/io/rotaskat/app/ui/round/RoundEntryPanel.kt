@@ -609,6 +609,7 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
             onContentColor = colors.onGain,
             enabled = ready,
             onClick = { onCommit(true) },
+            previous = draft.originalWon == true,
             modifier = Modifier.weight(1f),
         )
         CommitButton(
@@ -618,6 +619,7 @@ private fun CommitRow(draft: RoundDraft, onCommit: (Boolean) -> Unit) {
             onContentColor = colors.onLoss,
             enabled = ready,
             onClick = { onCommit(false) },
+            previous = draft.originalWon == false,
             modifier = Modifier.weight(1f),
         )
     }

@@ -189,12 +189,19 @@ fun CommitButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     detail: String? = null,
+    /** Der Ausgang, der vor der Korrektur gespeichert war. */
+    previous: Boolean = false,
 ) {
     Surface(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.defaultMinSize(minHeight = RotaskatDimens.commitButton),
         shape = RoundedCornerShape(18.dp),
+        border = if (previous) {
+            androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface)
+        } else {
+            null
+        },
         color = if (enabled) color else MaterialTheme.colorScheme.surfaceContainerLowest,
         contentColor = if (enabled) onContentColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
     ) {
@@ -205,7 +212,10 @@ fun CommitButton(
                     // Was der Alleinspieler bei diesem Ausgang bekaeme, schon vor
                     // dem Tap. Die zweite Gelegenheit, einen falsch getippten
                     // Spielwert zu bemerken.
-                    Text(text = detail, style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        text = if (previous) "$detail · bisher" else detail,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
                 }
             }
         }
