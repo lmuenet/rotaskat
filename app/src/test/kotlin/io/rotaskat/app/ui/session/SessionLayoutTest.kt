@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.data.T0
 import io.rotaskat.app.data.TEST_CLUB
+import io.rotaskat.app.data.suitRound
 import io.rotaskat.app.ui.round.Announcement
 import io.rotaskat.app.ui.round.GamePick
 import io.rotaskat.app.ui.round.RoundDraft
@@ -64,6 +65,18 @@ class SessionLayoutTest {
         assertVisibleInScrollArea("Spitzen", "1", "4")
     }
 
+    /** Die Undo-Zeile ueber der Eingabe darf die Spitzen nicht unter die Falz schieben. */
+    @Test
+    fun `mit der Zeile der letzten Runde bleiben die Spitzen im Bild`() {
+        val previous = suitRound("r-1", dealerSeat = 3, declarerSeat = 2, matadors = 2)
+        show(
+            seatCount = 4,
+            draft = draft(seatCount = 4),
+            lastChange = LastChange(LastChange.Kind.SAVED, previous, UndoToken.Remove(previous.id)),
+        )
+        assertVisibleInScrollArea("Rückgängig", "Spitzen", "1", "4")
+    }
+
     private fun draft(seatCount: Int) = RoundDraft.forNextRound(
         roundId = "r0",
         seatCount = seatCount,
@@ -71,7 +84,7 @@ class SessionLayoutTest {
         config = TEST_CLUB.scoring,
     ).copy(declarerSeat = 1).withGame(GamePick.Colour(Suit.CLUBS))
 
-    private fun show(seatCount: Int, draft: RoundDraft) {
+    private fun show(seatCount: Int, draft: RoundDraft, lastChange: LastChange? = null) {
         val session = Session(
             id = "s",
             clubId = TEST_CLUB.id,
@@ -101,6 +114,7 @@ class SessionLayoutTest {
                         onEditRound = {},
                         onCancelEdit = {},
                         onDelete = {},
+                        lastChange = lastChange,
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.height(GESTURE_BAR))

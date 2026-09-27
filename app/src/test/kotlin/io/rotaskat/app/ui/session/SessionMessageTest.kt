@@ -52,6 +52,7 @@ class SessionMessageTest {
 
     private val dispatcher = StandardTestDispatcher()
     private lateinit var repository: FakeRepository
+    private val undoLog = SessionUndoLog()
 
     @Before
     fun setUp() {
@@ -68,7 +69,7 @@ class SessionMessageTest {
     fun `eine gespeicherte Korrektur meldet sich als abgeschlossen`() = runTest(dispatcher) {
         val roundId = repository.add(suitRound("r0", dealerSeat = 0, declarerSeat = 1))
 
-        val viewModel = SessionViewModel(repository, SESSION_ID)
+        val viewModel = SessionViewModel(repository, SESSION_ID, undoLog)
         viewModel.beginEdit(roundId)
         advanceUntilIdle()
         assertTrue(viewModel.draft.value!!.editing)
@@ -78,20 +79,21 @@ class SessionMessageTest {
 
         val message = assertIs<SessionMessage.Saved>(viewModel.message.value)
         assertTrue(message.closesEdit, "Die Korrektur ist fertig, der Bildschirm hat seinen Zweck erfuellt")
-        assertIs<UndoToken.Restore>(message.undo)
+        assertEquals(LastChange.Kind.CORRECTED, undoLog.current(SESSION_ID)?.kind)
+        assertIs<UndoToken.Restore>(undoLog.current(SESSION_ID)?.undo)
         assertEquals(false, repository.rounds.single().won)
     }
 
     /**
-     * Eine geloeschte Runde ist ueber die Rundenliste nicht mehr erreichbar -
-     * das Undo in der Snackbar ist der einzige Rueckweg. Der Bildschirm bleibt
-     * deshalb stehen, bis die Leiste durch ist.
+     * Frueher blieb der Korrekturbildschirm nach dem Loeschen stehen, bis die
+     * Snackbar ablief - mit aktivem Speichern-Knopf fuer die geloeschte Runde.
+     * Jetzt geht es sofort zurueck, und der Abend bietet das Undo an.
      */
     @Test
-    fun `eine geloeschte Runde haelt den Bildschirm fuer das Undo`() = runTest(dispatcher) {
+    fun `eine geloeschte Runde beendet die Korrektur und bleibt im Abend rueckgaengig machbar`() = runTest(dispatcher) {
         val roundId = repository.add(suitRound("r0", dealerSeat = 0, declarerSeat = 1))
 
-        val viewModel = SessionViewModel(repository, SESSION_ID)
+        val viewModel = SessionViewModel(repository, SESSION_ID, undoLog)
         viewModel.beginEdit(roundId)
         advanceUntilIdle()
 
@@ -99,14 +101,22 @@ class SessionMessageTest {
         advanceUntilIdle()
 
         val message = assertIs<SessionMessage.Saved>(viewModel.message.value)
-        assertFalse(message.closesEdit)
-        assertIs<UndoToken.Restore>(message.undo)
+        assertTrue(message.closesEdit)
+
+        // Der Abend hat ein eigenes ViewModel, teilt sich aber das Protokoll.
+        val evening = SessionViewModel(repository, SESSION_ID, undoLog)
+        advanceUntilIdle()
+        assertEquals(LastChange.Kind.DELETED, evening.lastChange.value?.kind)
+        evening.undoLastChange()
+        advanceUntilIdle()
+        assertTrue(repository.isLive(roundId), "Das Undo hebt den Tombstone wieder auf")
+        assertTrue(evening.lastChange.value!!.undone)
     }
 
     /** Eine neue Runde kommt gar nicht aus der Korrektur - es gibt nichts zu verlassen. */
     @Test
     fun `eine neu eingetragene Runde schliesst keine Korrektur`() = runTest(dispatcher) {
-        val viewModel = SessionViewModel(repository, SESSION_ID)
+        val viewModel = SessionViewModel(repository, SESSION_ID, undoLog)
         advanceUntilIdle()
 
         viewModel.updateDraft { it.copy(declarerSeat = 1).withGame(GamePick.Grand) }
@@ -115,7 +125,7 @@ class SessionMessageTest {
 
         val message = assertIs<SessionMessage.Saved>(viewModel.message.value)
         assertFalse(message.closesEdit)
-        assertIs<UndoToken.Remove>(message.undo)
+        assertIs<UndoToken.Remove>(viewModel.lastChange.value?.undo)
     }
 
     /**
@@ -127,6 +137,8 @@ class SessionMessageTest {
 
         val rounds = mutableListOf<Round>()
         private val deleted = mutableSetOf<String>()
+
+        fun isLive(roundId: String) = roundId !in deleted
 
         private val session = Session(
             id = SESSION_ID,

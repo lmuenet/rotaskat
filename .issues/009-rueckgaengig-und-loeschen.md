@@ -3,7 +3,7 @@ titel: Rückgängig-Leiste - kurz, verdeckt die Ergebnisbuttons, nach dem Lösch
 typ: UX
 schwere: mittel
 bereich: Abend, Snackbar, Undo
-status: offen
+status: erledigt
 gefunden: 2026-09-27
 ---
 
@@ -36,3 +36,16 @@ Auf dem Gerät gilt dafür:
   positionieren, Inhalt mit Spieler und Punkten.
 - Nach dem Löschen sofort zurücknavigieren und das Undo im Abend-Bildschirm
   anbieten.
+
+## Umsetzung
+
+- Keine Undo-Snackbar mehr. Über der Eingabe steht dauerhaft eine Zeile
+  „Gespeichert: Anna · Kreuz mit 2 · gewonnen  +36  [Rückgängig]“ (bzw.
+  „Geändert“, „Gelöscht“, nach dem Undo „Zurückgenommen“), bis die nächste
+  Änderung sie ersetzt. Sie liegt weit weg von den Ergebnisbuttons.
+- Korrektur und Löschen führen sofort zurück in den Abend; das Undo steht dort.
+  Dafür teilen sich Abend- und Korrektur-ViewModel ein prozessweites
+  `SessionUndoLog` (nur im Speicher).
+- Nebenbei (#010): Während des Speicherns wird der Entwurf nicht mehr von der
+  neuen Rotation umgehängt, Entwurf und Anzeige wechseln in einem Schritt;
+  Doppeltaps während des Speicherns werden ignoriert.

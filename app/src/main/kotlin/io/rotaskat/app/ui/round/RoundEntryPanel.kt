@@ -535,7 +535,7 @@ private fun GameValueDisplay(draft: RoundDraft) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp, horizontal = 16.dp),
         ) {
             Text(
                 text = value?.toString() ?: "-",

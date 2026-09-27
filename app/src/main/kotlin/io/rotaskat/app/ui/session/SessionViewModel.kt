@@ -19,42 +19,28 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Was der Rundeneingabe nach einem Tap auf Gewonnen oder Verloren zurueckgemeldet
- * wird.
+ * Was der Rundeneingabe nach einem Tap zurueckgemeldet wird.
  *
- * Zwei Ergebnisse, zwei Kanaele: die Oberflaeche macht daraus eine Snackbar, die
- * Haptik macht daraus einen Doppelpuls oder einen langen Puls. Ein Dialog kommt
- * bewusst in keinem der beiden Faelle vor - bei dreissig Runden pro Abend wird
- * jeder Bestaetigungsdialog blind weggetippt und erhoeht die Fehlerzahl, statt
- * sie zu senken.
+ * Die Oberflaeche macht daraus Haptik und - nur bei Fehlern - eine Leiste. Ein
+ * Dialog kommt bewusst nicht vor: bei dreissig Runden pro Abend wird jeder
+ * Bestaetigungsdialog blind weggetippt und erhoeht die Fehlerzahl, statt sie zu
+ * senken. Was gespeichert wurde und wie es sich zuruecknehmen laesst, steht
+ * dauerhaft in [SessionViewModel.lastChange].
  */
 sealed interface SessionMessage {
 
-    val text: String
-
     data class Saved(
-        override val text: String,
-        val undo: UndoToken,
         /**
-         * Die Korrektur ist damit fertig und der Bildschirm hat seinen Zweck
-         * erfuellt. Der Rueckweg haengt dann NICHT am Ende der Snackbar: sonst
-         * steht die Oberflaeche nach dem Speichern weiter auf "Runde
-         * korrigieren", und es sieht aus, als haette der Tap nichts getan.
+         * Die Korrektur (oder das Loeschen) ist fertig und der Bildschirm hat
+         * seinen Zweck erfuellt. Der Rueckweg folgt SOFORT - das Undo wird im
+         * Abend angeboten, nicht hier.
          */
         val closesEdit: Boolean = false,
     ) : SessionMessage
 
-    data class Failed(override val text: String) : SessionMessage
-}
+    data object Undone : SessionMessage
 
-/** Wie eine gerade gespeicherte Aenderung wieder zurueckgenommen wird. */
-sealed interface UndoToken {
-
-    /** Eine neu angelegte Runde: Tombstone setzen. */
-    data class Remove(val roundId: String) : UndoToken
-
-    /** Eine Korrektur: den vorherigen Stand als neue Revision zurueckschreiben. */
-    data class Restore(val round: Round) : UndoToken
+    data class Failed(val text: String) : SessionMessage
 }
 
 /**
@@ -68,6 +54,7 @@ sealed interface UndoToken {
 class SessionViewModel(
     private val repository: RotaskatRepository,
     private val sessionId: String,
+    private val undoLog: SessionUndoLog = SessionUndoLog(),
 ) : ViewModel() {
 
     val state: StateFlow<SessionState?> = repository.observeSession(sessionId)
@@ -82,8 +69,20 @@ class SessionViewModel(
     private val _message = MutableStateFlow<SessionMessage?>(null)
     val message: StateFlow<SessionMessage?> = _message.asStateFlow()
 
+    /** Die letzte Aenderung am Abend, auch wenn sie im Korrekturbildschirm passiert ist. */
+    val lastChange: StateFlow<LastChange?> = undoLog.observe(sessionId)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, undoLog.current(sessionId))
+
     /** Der Stand vor einer Korrektur, damit das Undo etwas hat, worauf es zeigt. */
     private var beforeEdit: Round? = null
+
+    /**
+     * Zwischen dem Tap und dem neuen Entwurf. Solange die Runde gespeichert
+     * wird, bleibt der alte Entwurf unangetastet stehen: sonst haengte die neue
+     * Rotation ihn schon um, der Alleinspieler fiele heraus, und fuer einen
+     * Moment stand "-" neben "Karo mit 1 = 18".
+     */
+    private var committing = false
 
     init {
         viewModelScope.launch {
@@ -106,7 +105,7 @@ class SessionViewModel(
             _draft.value = newDraft(session)
             return
         }
-        if (current.editing) return
+        if (current.editing || committing) return
         if (current.dealerSeat != session.session.dealerSeat) {
             _draft.value = current.withDealer(session.session.dealerSeat)
         }
@@ -120,6 +119,7 @@ class SessionViewModel(
     )
 
     fun updateDraft(transform: (RoundDraft) -> RoundDraft) {
+        if (committing) return
         // Das Gebot folgt dem Spielwert: wer nach "ueberreizt" noch die Spitzen
         // aendert, soll kein Gebot unter dem Spielwert stehen haben.
         _draft.value = _draft.value?.let(transform)?.withBidAboveValue()
@@ -147,9 +147,10 @@ class SessionViewModel(
     /**
      * "Gewonnen" und "Verloren" SIND der Speichern-Knopf. Es gibt keinen
      * zweiten Schritt und keine Rueckfrage; abgesichert wird ueber das Undo in
-     * der Snackbar.
+     * der Zeile "Gespeichert: ..." oberhalb der Eingabe.
      */
     fun commit(won: Boolean) {
+        if (committing) return
         val draft = _draft.value ?: return
         val round = draft.toRound(won)
         if (round == null) {
@@ -175,27 +176,26 @@ class SessionViewModel(
 
         val editing = draft.editing
         val previous = beforeEdit
+        committing = true
         viewModelScope.launch {
             val result = runCatching {
                 if (editing) repository.correctRound(round) else repository.recordRound(sessionId, round)
             }
             result.onSuccess {
-                _message.value = if (editing && previous != null) {
-                    SessionMessage.Saved("Runde geändert", UndoToken.Restore(previous), closesEdit = true)
-                } else {
-                    SessionMessage.Saved(
-                        when {
-                            round.ramsch != null -> "Ramsch gespeichert"
-                            won -> "Gewonnen gespeichert"
-                            else -> "Verloren gespeichert"
-                        },
-                        UndoToken.Remove(round.id),
-                    )
+                when {
+                    editing && previous != null ->
+                        undoLog.record(sessionId, LastChange(LastChange.Kind.CORRECTED, round, UndoToken.Restore(previous)))
+                    !editing ->
+                        undoLog.record(sessionId, LastChange(LastChange.Kind.SAVED, round, UndoToken.Remove(round.id)))
                 }
                 beforeEdit = null
+                // Entwurf und Anzeige in EINEM Schritt zuruecksetzen.
                 val current = repository.session(sessionId)
                 if (current != null) _draft.value = newDraft(current)
+                committing = false
+                _message.value = SessionMessage.Saved(closesEdit = editing)
             }.onFailure {
+                committing = false
                 _message.value = SessionMessage.Failed(it.readableMessage())
             }
         }
@@ -210,6 +210,12 @@ class SessionViewModel(
         }
     }
 
+    /**
+     * Loescht eine Runde aus der Korrektur heraus und beendet die Korrektur
+     * sofort. Frueher blieb der Bildschirm bis zum Ende der Snackbar stehen,
+     * mit aktivem Speichern-Knopf fuer die gerade geloeschte Runde. Das Undo
+     * steht jetzt im Abend.
+     */
     fun deleteRound(roundId: String) {
         viewModelScope.launch {
             val existing = repository.session(sessionId)
@@ -225,21 +231,27 @@ class SessionViewModel(
                     // Ein Tombstone laesst sich durch eine neue Revision mit
                     // demselben Inhalt wieder aufheben. Physisch geloescht wurde
                     // nichts, deshalb geht das ueberhaupt.
-                    _message.value =
-                        SessionMessage.Saved("Runde gelöscht", UndoToken.Restore(existing))
-                    if (_draft.value?.roundId == roundId) cancelEdit()
+                    undoLog.record(sessionId, LastChange(LastChange.Kind.DELETED, existing, UndoToken.Restore(existing)))
+                    beforeEdit = null
+                    _message.value = SessionMessage.Saved(closesEdit = true)
                 }
                 .onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }
         }
     }
 
-    fun undo(token: UndoToken) {
+    /** Nimmt die letzte Aenderung des Abends zurueck. Ein zweiter Tap tut nichts. */
+    fun undoLastChange() {
+        val change = lastChange.value ?: return
+        if (change.undone) return
         viewModelScope.launch {
             runCatching {
-                when (token) {
+                when (val token = change.undo) {
                     is UndoToken.Remove -> repository.deleteRound(token.roundId)
                     is UndoToken.Restore -> repository.correctRound(token.round)
                 }
+            }.onSuccess {
+                undoLog.markUndone(sessionId, change)
+                _message.value = SessionMessage.Undone
             }.onFailure { _message.value = SessionMessage.Failed(it.readableMessage()) }
         }
     }
@@ -260,7 +272,7 @@ class SessionViewModel(
 
     companion object {
         fun factory(graph: RotaskatGraph, sessionId: String) = viewModelFactory {
-            initializer { SessionViewModel(graph.repository, sessionId) }
+            initializer { SessionViewModel(graph.repository, sessionId, SessionUndoLog.process) }
         }
     }
 }

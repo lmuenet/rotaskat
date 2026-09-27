@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.text.style.TextOverflow
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -20,10 +19,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -94,6 +91,7 @@ fun SessionScreen(
     val roster by viewModel.roster.collectAsState()
     val draft by viewModel.draft.collectAsState()
     val message by viewModel.message.collectAsState()
+    val lastChange by viewModel.lastChange.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -109,43 +107,30 @@ fun SessionScreen(
             null -> Unit
             is SessionMessage.Saved -> {
                 haptics.commit()
+                viewModel.consumeMessage()
                 if (current.closesEdit) {
-                    // Eine abgeschlossene Korrektur fuehrt SOFORT zurueck.
-                    // Frueher stand der Rueckweg hinter der Snackbar: der
-                    // Bildschirm blieb bis dahin auf "Runde korrigieren"
-                    // stehen, es sah aus, als haette der Tap nichts getan, und
-                    // der naechste Tap speicherte ein zweites Mal. Die
-                    // korrigierte Runde steht sofort in der Liste des Abends -
-                    // das ist die bessere Rueckmeldung als eine Leiste, auf die
-                    // gewartet werden muss.
-                    viewModel.consumeMessage()
+                    // Eine abgeschlossene Korrektur - oder ein Loeschen - fuehrt
+                    // SOFORT zurueck. Das Undo steht dann im Abend in der Zeile
+                    // ueber der Eingabe, nicht in einer Leiste, auf die hier
+                    // gewartet werden muesste.
                     actions.back()
                 } else {
-                    // Die naechste Runde beginnt oben. Wer fuer Spitzen oder Zusaetze
-                    // gescrollt hatte, sah sonst die Alleinspieler-Auswahl nicht mehr.
-                    launch { scrollState.animateScrollTo(0) }
-                    val result = snackbarHostState.showSnackbar(
-                        message = current.text,
-                        actionLabel = "Rückgängig",
-                        // Ohne Angabe waehlt Material3 bei gesetztem
-                        // actionLabel Indefinite. Die Leiste bliebe dann ueber
-                        // den Ergebnisknoepfen der naechsten Runde stehen, und
-                        // der naechste Blindtap traefe "Rueckgaengig".
-                        duration = SnackbarDuration.Short,
-                    )
-                    if (result == SnackbarResult.ActionPerformed) viewModel.undo(current.undo)
-                    viewModel.consumeMessage()
-                    // Nach dem Loeschen zurueck zum laufenden Abend, aber erst
-                    // jetzt: eine geloeschte Runde ist ueber die Liste nicht
-                    // mehr erreichbar, das Undo ist der einzige Rueckweg.
-                    if (editRoundId != null) actions.back()
+                    // Die naechste Runde beginnt oben, dort steht auch die Zeile
+                    // mit dem Undo. Wer fuer Spitzen oder Zusaetze gescrollt
+                    // hatte, sah sonst die Alleinspieler-Auswahl nicht mehr.
+                    scrollState.animateScrollTo(0)
                 }
+            }
+
+            SessionMessage.Undone -> {
+                haptics.select()
+                viewModel.consumeMessage()
             }
 
             is SessionMessage.Failed -> {
                 haptics.failure()
-                snackbarHostState.showSnackbar(current.text)
                 viewModel.consumeMessage()
+                snackbarHostState.showSnackbar(current.text)
             }
         }
     }
@@ -199,6 +184,8 @@ fun SessionScreen(
             onEditRound = { roundId -> actions.toRoundEdit(sessionId, roundId) },
             onCancelEdit = { viewModel.cancelEdit(); actions.back() },
             onDelete = { editRoundId?.let(viewModel::deleteRound) },
+            lastChange = lastChange,
+            onUndo = viewModel::undoLastChange,
             // Die Tastatur der Ramsch-Augen schiebt die Ergebnisleiste mit nach
             // oben, statt das zweite und dritte Feld zu verdecken. Das Fenster
             // selbst wird bei targetSdk 35 nicht mehr verkleinert.
@@ -251,6 +238,8 @@ internal fun SessionBody(
     onCancelEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    lastChange: LastChange? = null,
+    onUndo: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -272,7 +261,7 @@ internal fun SessionBody(
                 .fillMaxWidth()
                 .testTag(SessionTags.SCROLL_AREA)
                 .verticalScroll(scrollState)
-                .padding(vertical = RotaskatDimens.sectionSpacing),
+                .padding(top = RotaskatDimens.itemSpacing, bottom = RotaskatDimens.sectionSpacing),
             verticalArrangement = Arrangement.spacedBy(RotaskatDimens.sectionSpacing),
         ) {
             if (state.session.status == SessionStatus.CLOSED) {
@@ -282,12 +271,20 @@ internal fun SessionBody(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                RoundEntryPanel(
-                    draft = draft,
-                    seatNames = names,
-                    onDraftChange = onDraftChange,
-                    onDealerChange = onDealerChange,
-                )
+                // Die Undo-Zeile sitzt mit dem kleinen Abstand direkt ueber der
+                // Eingabe: sie gehoert dazu und soll die Spitzen nicht unter die
+                // Falz schieben.
+                Column(verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing)) {
+                    if (!editing && lastChange != null) {
+                        LastChangeRow(change = lastChange, state = state, names = names, onUndo = onUndo)
+                    }
+                    RoundEntryPanel(
+                        draft = draft,
+                        seatNames = names,
+                        onDraftChange = onDraftChange,
+                        onDealerChange = onDealerChange,
+                    )
+                }
             }
 
             if (!editing) {
