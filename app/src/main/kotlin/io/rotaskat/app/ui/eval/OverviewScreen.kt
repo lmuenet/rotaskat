@@ -1,6 +1,7 @@
 package io.rotaskat.app.ui.eval
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,13 +13,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,12 +33,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rotaskat.app.data.SessionState
 import io.rotaskat.app.ui.LocalRotaskatGraph
 import io.rotaskat.app.ui.common.RotaskatTopBar
-import io.rotaskat.app.ui.common.formatDate
+import io.rotaskat.app.ui.common.SectionLabel
 import io.rotaskat.app.ui.common.formatPoints
+import io.rotaskat.app.ui.common.formatShortDate
 import io.rotaskat.app.ui.nav.RotaskatNavActions
 import io.rotaskat.app.ui.seatNames
 import io.rotaskat.app.ui.theme.RotaskatDimens
 import io.rotaskat.app.ui.theme.RotaskatTextStyles
+import io.rotaskat.app.ui.theme.accentColors
 import io.rotaskat.app.ui.theme.scoreColors
 import io.rotaskat.shared.model.Player
 import io.rotaskat.shared.model.SessionStatus
@@ -75,50 +79,56 @@ fun OverviewScreen(
                 },
             )
         },
+        floatingActionButton = {
+            val running = states.any { it.session.status == SessionStatus.OPEN }
+            // Laeuft ein Abend, ist "Weiterspielen" die Hauptaktion und der neue
+            // Abend nur umrandet. Laeuft keiner, ist er die Hauptaktion.
+            ExtendedFloatingActionButton(
+                onClick = { actions.toNewSession() },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("Neuer Abend") },
+                containerColor = if (running) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primary,
+                contentColor = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
+                modifier = if (running) {
+                    Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp))
+                } else {
+                    Modifier
+                },
+            )
+        },
     ) { padding ->
         val open = states.firstOrNull { it.session.status == SessionStatus.OPEN }
         val closed = states.filter { it.session.status == SessionStatus.CLOSED }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(RotaskatDimens.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(RotaskatDimens.itemSpacing),
+            // Unten Platz fuer den FAB, damit der letzte Abend nicht darunter liegt.
+            contentPadding = PaddingValues(
+                start = RotaskatDimens.screenPadding,
+                end = RotaskatDimens.screenPadding,
+                top = RotaskatDimens.itemSpacing,
+                bottom = 96.dp,
+            ),
         ) {
             if (open != null) {
-                item(key = "open") {
-                    SectionHeading("Laufender Abend")
-                }
                 item(key = open.session.id) {
-                    SessionCard(
+                    LiveSessionCard(
                         state = open,
-                        roster = roster,
-                        onClick = { actions.toSession(open.session.id) },
+                        names = seatNames(open.session, roster),
+                        onContinue = { actions.toSession(open.session.id) },
                     )
                 }
             }
 
-            if (open == null) {
-                // Nur wenn nichts laeuft: es gibt hoechstens einen offenen
-                // Abend, und ein zweiter Knopf daneben wuerde das Gegenteil
-                // suggerieren.
-                item(key = "new-session") {
-                    Button(
-                        onClick = { actions.toNewSession() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = RotaskatDimens.bigTapTarget),
-                    ) { Text("Neuen Abend starten") }
-                }
-            }
-
             item(key = "closed-heading") {
-                SectionHeading(
-                    if (closed.isEmpty()) "Noch keine abgeschlossenen Abende" else "Abgeschlossene Abende"
+                SectionLabel(
+                    text = if (closed.isEmpty()) "Noch keine abgeschlossenen Abende" else "Frühere Abende",
+                    modifier = Modifier.padding(top = RotaskatDimens.sectionSpacing),
                 )
             }
 
             items(closed, key = { it.session.id }) { state ->
-                SessionCard(
+                PastSessionRow(
                     state = state,
                     roster = roster,
                     onClick = { actions.toSettlement(state.session.id) },
@@ -138,80 +148,63 @@ fun OverviewScreen(
     }
 }
 
-@Composable
-private fun SectionHeading(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(top = 6.dp, bottom = 2.dp),
-    )
-}
-
 /**
- * Ein Abend in der Liste.
+ * Ein frueherer Abend: Datum, Umfang, Sieger.
  *
- * Der Endstand steht schon hier, nicht erst im Detail: wer die Historie
- * durchblaettert, sucht meistens genau ihn, und ein Tap, der nur eine Zahl
- * nachliefert, ist ein Tap zu viel.
+ * Eine ruhige Zeile statt einer Karte - der Endstand steht schon hier, nicht
+ * erst im Detail: wer die Historie durchblaettert, sucht meistens genau ihn.
  */
 @Composable
-private fun SessionCard(
+private fun PastSessionRow(
     state: SessionState,
     roster: List<Player>,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.scoreColors
     val names = seatNames(state.session, roster)
-    val ranking = (0 until state.session.seatCount)
+    val winner = (0 until state.session.seatCount)
         .map { seat -> (names[seat] ?: "Platz ${seat + 1}") to (state.totals[seat] ?: 0L) }
-        .sortedByDescending { it.second }
-    val leader = ranking.firstOrNull()
-
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth(),
+        .maxByOrNull { it.second }
+    val rounds = state.liveRounds.size
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = RotaskatDimens.tapTarget),
     ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = formatDate(state.session.startedAt),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = buildString {
-                            append("${state.liveRounds.size} ")
-                            append(if (state.liveRounds.size == 1) "Runde" else "Runden")
-                            append(" - ${state.session.seatCount} Spieler")
-                            if (state.session.status == SessionStatus.OPEN) append(" - läuft")
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (leader != null) {
-                    Text(
-                        text = formatPoints(leader.second),
-                        style = RotaskatTextStyles.scoreMedium,
-                        color = when {
-                            leader.second > 0 -> colors.gain
-                            leader.second < 0 -> colors.loss
-                            else -> colors.neutral
-                        },
-                    )
-                }
-            }
-            if (ranking.isNotEmpty()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = ranking.joinToString("  ") { "${it.first} ${formatPoints(it.second)}" },
+                    text = formatShortDate(state.session.startedAt),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = "$rounds ${if (rounds == 1) "Runde" else "Runden"} · " +
+                        if (state.session.seatCount == 4) "zu viert" else "zu dritt",
                     style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.accentColors.labelMuted,
+                )
+            }
+            if (winner != null) {
+                Text(
+                    text = winner.first + " ",
+                    style = RotaskatTextStyles.compact,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    modifier = Modifier.padding(top = 6.dp),
+                )
+                Text(
+                    text = formatPoints(winner.second),
+                    style = RotaskatTextStyles.scoreMedium,
+                    color = when {
+                        winner.second > 0 -> colors.gain
+                        winner.second < 0 -> colors.loss
+                        else -> colors.neutral
+                    },
                 )
             }
         }
+        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
     }
 }
