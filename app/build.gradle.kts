@@ -14,8 +14,10 @@ android {
         applicationId = "io.rotaskat.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // Der Release-Workflow leitet beides aus dem Git-Tag ab (v1.2.3 ->
+        // versionName 1.2.3, versionCode 10203). Lokal gelten die Vorgaben.
+        versionCode = providers.gradleProperty("rotaskat.versionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("rotaskat.versionName").orNull ?: "0.1.0"
 
         // Die Server-Adresse ist keine Konstante im Code, sondern kommt aus
         // der Umgebung. Lokal per local.properties oder Env-Variable, im CI
@@ -27,8 +29,25 @@ android {
         )
     }
 
+    // Der Release-Schluessel liegt nie im Repo. Im CI kommt er aus den GitHub
+    // Secrets, lokal aus denselben Env-Variablen - so verhaelt sich der lokale
+    // Release-Build identisch zur CI. Ohne Schluessel entsteht eine unsignierte
+    // APK, der Build selbst scheitert nicht.
+    val keystoreFile = System.getenv("ROTASKAT_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
+    signingConfigs {
+        if (keystoreFile != null) {
+            create("release") {
+                storeFile = file(keystoreFile)
+                storePassword = System.getenv("ROTASKAT_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ROTASKAT_KEY_ALIAS")
+                keyPassword = System.getenv("ROTASKAT_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
