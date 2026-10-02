@@ -138,6 +138,32 @@ gemappt und nur im Compose-Netz erreichbar.
 Keine dieser Angaben steht im Repo. Fuer CI-Builds liegen sie in den
 GitHub-Actions-Secrets.
 
+## Release
+
+Ein Tag `vX.Y.Z` startet `.github/workflows/release.yml`: Tests, signierte
+Release-APK, GitHub Release mit der APK als Download. `versionName` und
+`versionCode` kommen aus dem Tag.
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Der Signierschluessel liegt in den GitHub-Actions-Secrets:
+
+| Secret | Inhalt |
+|--------|--------|
+| `ROTASKAT_KEYSTORE_BASE64` | Keystore-Datei, base64-kodiert |
+| `ROTASKAT_KEYSTORE_PASSWORD` | Passwort des Keystores |
+| `ROTASKAT_KEY_ALIAS` | Alias des Schluessels |
+| `ROTASKAT_KEY_PASSWORD` | Passwort des Schluessels |
+
+Der Keystore gehoert zusaetzlich ausserhalb von GitHub gesichert. Geht er
+verloren, laesst sich keine neue Version mehr ueber die installierte
+spielen - jeder muesste die App loeschen und mit ihr seine lokalen Abende.
+
+Lokal baut `./gradlew :app:assembleRelease` mit denselben Angaben als
+Env-Variablen, nur `ROTASKAT_KEYSTORE_FILE` zeigt dort auf die Datei.
+
 ## Lizenz
 
 [Apache License 2.0](LICENSE). Bewusst gewaehlt, weil JSkat und
