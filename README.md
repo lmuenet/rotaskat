@@ -157,6 +157,10 @@ zufaellig, im Passwortmanager. Geht es verloren, laesst sich keine neue
 Version mehr ueber die installierte spielen - jeder muesste die App loeschen
 und mit ihr seine lokalen Abende.
 
+Solange Datei oder Secret fehlen, signiert der Release-Workflow mit einem
+Wegwerf-Schluessel, der nur auf dem Runner existiert. Solche Releases sind als
+Testversion markiert: vor jedem Update muss die alte Version runter.
+
 Entschluesseln fuer einen lokalen Release-Build:
 
 ```bash
