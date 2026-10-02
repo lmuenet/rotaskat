@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Grund des Vereinslogos, damit die Vordergrundebene nahtlos uebergeht. -->
+    <color name="ic_launcher_background">#18212D</color>
+</resources>
