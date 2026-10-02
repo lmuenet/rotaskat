@@ -148,21 +148,24 @@ Release-APK, GitHub Release mit der APK als Download. `versionName` und
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-Der Signierschluessel liegt in den GitHub-Actions-Secrets:
+Der Signierschluessel liegt AES-256-verschluesselt als `app/release.jks.enc`
+im Repo, das Passwort nur im Actions-Secret `ROTASKAT_KEYSTORE_PASSWORD`
+(Alias `rotaskat`). Angelegt hat ihn einmalig
+`.github/workflows/signing-key.yml` auf dem Runner, einen vorhandenen ersetzt
+der Workflow nie. Da die Datei oeffentlich ist, haengt alles am Passwort: lang,
+zufaellig, im Passwortmanager. Geht es verloren, laesst sich keine neue
+Version mehr ueber die installierte spielen - jeder muesste die App loeschen
+und mit ihr seine lokalen Abende.
 
-| Secret | Inhalt |
-|--------|--------|
-| `ROTASKAT_KEYSTORE_BASE64` | Keystore-Datei, base64-kodiert |
-| `ROTASKAT_KEYSTORE_PASSWORD` | Passwort des Keystores |
-| `ROTASKAT_KEY_ALIAS` | Alias des Schluessels |
-| `ROTASKAT_KEY_PASSWORD` | Passwort des Schluessels |
+Entschluesseln fuer einen lokalen Release-Build:
 
-Der Keystore gehoert zusaetzlich ausserhalb von GitHub gesichert. Geht er
-verloren, laesst sich keine neue Version mehr ueber die installierte
-spielen - jeder muesste die App loeschen und mit ihr seine lokalen Abende.
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in app/release.jks.enc -out release.jks
+```
 
-Lokal baut `./gradlew :app:assembleRelease` mit denselben Angaben als
-Env-Variablen, nur `ROTASKAT_KEYSTORE_FILE` zeigt dort auf die Datei.
+Danach baut `./gradlew :app:assembleRelease` signiert, wenn
+`ROTASKAT_KEYSTORE_FILE`, `ROTASKAT_KEYSTORE_PASSWORD`, `ROTASKAT_KEY_ALIAS`
+und `ROTASKAT_KEY_PASSWORD` gesetzt sind.
 
 ## Lizenz
 
