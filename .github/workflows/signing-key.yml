@@ -1,0 +1,61 @@
+name: Signierschluessel anlegen
+
+# Erzeugt den Release-Schluessel einmalig auf dem Runner und legt ihn mit
+# AES-256 verschluesselt als app/release.jks.enc ins Repo. Das Passwort steht
+# nur im Secret ROTASKAT_KEYSTORE_PASSWORD, der Schluessel verlaesst den Runner
+# nie im Klartext. Die verschluesselte Datei ist zugleich das Backup.
+#
+# Ein vorhandener Schluessel wird nie ersetzt: mit einem neuen liessen sich
+# installierte Apps nicht mehr aktualisieren.
+on:
+  push:
+    paths: ['.github/workflows/signing-key.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Schluessel erzeugen und verschluesseln
+        id: key
+        env:
+          PASS: ${{ secrets.ROTASKAT_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -f app/release.jks.enc ]; then
+            echo "::notice::app/release.jks.enc existiert schon, nichts zu tun"
+            exit 0
+          fi
+          # Die Datei liegt in einem oeffentlichen Repo. Ihre Sicherheit haengt
+          # allein am Passwort, also nur ein langes zulassen.
+          if [ "${#PASS}" -lt 24 ]; then
+            echo "::error::Secret ROTASKAT_KEYSTORE_PASSWORD fehlt oder ist kuerzer als 24 Zeichen"
+            exit 1
+          fi
+          work="$RUNNER_TEMP/key"
+          mkdir -p "$work"
+          keytool -genkeypair -keystore "$work/release.jks" -storetype PKCS12 \
+            -alias rotaskat -keyalg RSA -keysize 4096 -validity 10000 \
+            -dname "CN=Rotaskat, C=DE" -storepass:env PASS -keypass:env PASS
+          openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -pass env:PASS \
+            -in "$work/release.jks" -out app/release.jks.enc
+          # Vor dem Commit beweisen, dass sich die Datei wieder oeffnen laesst.
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:PASS \
+            -in app/release.jks.enc -out "$work/check.jks"
+          cmp "$work/release.jks" "$work/check.jks"
+          keytool -list -keystore "$work/check.jks" -storepass:env PASS -alias rotaskat
+          rm -rf "$work"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Verschluesselten Schluessel committen
+        if: steps.key.outputs.created == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add app/release.jks.enc
+          git commit -m "Verschluesselten Release-Signierschluessel anlegen"
+          git push origin "HEAD:$GITHUB_REF_NAME"
