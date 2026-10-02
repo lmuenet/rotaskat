@@ -7,9 +7,10 @@ name: Signierschluessel anlegen
 #
 # Ein vorhandener Schluessel wird nie ersetzt: mit einem neuen liessen sich
 # installierte Apps nicht mehr aktualisieren.
+#
+# Startet nur per Hand (Actions -> Signierschluessel anlegen -> Run workflow),
+# nachdem das Secret angelegt ist.
 on:
-  push:
-    paths: ['.github/workflows/signing-key.yml']
   workflow_dispatch:
 
 permissions:
