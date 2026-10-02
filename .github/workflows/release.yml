@@ -28,20 +28,32 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
-      # Ohne festen Schluessel laesst sich ein spaeteres Update nicht ueber
-      # die alte Version installieren. Lieber hier abbrechen als eine APK mit
-      # Wegwerf-Schluessel verteilen. Angelegt wird er von signing-key.yml.
-      - name: Signierschluessel entschluesseln
+      # Mit dem festen Schluessel aus signing-key.yml legen sich Updates ueber
+      # die installierte Version. Solange es ihn nicht gibt, signiert ein
+      # Wegwerf-Schluessel, der den Runner nie verlaesst - dann muss vor jedem
+      # Update die alte Version deinstalliert werden.
+      - name: Signierschluessel bereitstellen
+        id: key
         env:
           PASS: ${{ secrets.ROTASKAT_KEYSTORE_PASSWORD }}
         run: |
-          if [ ! -f app/release.jks.enc ] || [ -z "$PASS" ]; then
-            echo "::error::app/release.jks.enc oder Secret ROTASKAT_KEYSTORE_PASSWORD fehlt"
-            exit 1
+          jks="$RUNNER_TEMP/release.jks"
+          if [ -f app/release.jks.enc ] && [ -n "$PASS" ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:PASS \
+              -in app/release.jks.enc -out "$jks"
+            echo "temporary=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Kein fester Signierschluessel, signiere mit Wegwerf-Schluessel"
+            PASS=$(openssl rand -hex 32)
+            echo "::add-mask::$PASS"
+            keytool -genkeypair -keystore "$jks" -storetype PKCS12 \
+              -alias rotaskat -keyalg RSA -keysize 4096 -validity 10000 \
+              -dname "CN=Rotaskat, C=DE" -storepass:env PASS -keypass:env PASS
+            echo "temporary=true" >> "$GITHUB_OUTPUT"
           fi
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:PASS \
-            -in app/release.jks.enc -out "$RUNNER_TEMP/release.jks"
-          echo "ROTASKAT_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          echo "ROTASKAT_KEYSTORE_FILE=$jks" >> "$GITHUB_ENV"
+          echo "ROTASKAT_KEYSTORE_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "ROTASKAT_KEY_PASSWORD=$PASS" >> "$GITHUB_ENV"
 
       - name: JDK 21 einrichten
         uses: actions/setup-java@v4
@@ -60,10 +72,7 @@ jobs:
 
       - name: Release-APK bauen
         env:
-          ROTASKAT_KEYSTORE_PASSWORD: ${{ secrets.ROTASKAT_KEYSTORE_PASSWORD }}
           ROTASKAT_KEY_ALIAS: rotaskat
-          # PKCS12 kennt nur ein Passwort fuer Keystore und Schluessel.
-          ROTASKAT_KEY_PASSWORD: ${{ secrets.ROTASKAT_KEYSTORE_PASSWORD }}
           ROTASKAT_SERVER_URL: ${{ secrets.ROTASKAT_SERVER_URL }}
         run: >
           ./gradlew :app:assembleRelease
@@ -90,6 +99,6 @@ jobs:
             2. Die Datei öffnen. Android fragt beim ersten Mal, ob der Browser bzw. die Dateien-App Apps installieren darf: erlauben.
             3. Installieren. Warnt Google Play Protect vor einer unbekannten App, auf "Trotzdem installieren" tippen.
 
-            Spätere Versionen lassen sich genauso über diese installieren, die gespielten Abende bleiben erhalten.
+            ${{ steps.key.outputs.temporary == 'true' && '**Testversion:** Vor dem nächsten Update muss diese Version deinstalliert werden, die gespielten Abende gehen dabei verloren.' || 'Spätere Versionen lassen sich genauso über diese installieren, die gespielten Abende bleiben erhalten.' }}
 
             Voraussetzung: Android 8.0 oder neuer.
