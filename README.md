@@ -148,6 +148,9 @@ Release-APK, GitHub Release mit der APK als Download. `versionName` und
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
+Ohne Rechner: Actions -> Release -> Run workflow, Version eintragen. Das Tag
+legt der Workflow dann selbst an.
+
 Der Signierschluessel liegt AES-256-verschluesselt als `app/release.jks.enc`
 im Repo, das Passwort nur im Actions-Secret `ROTASKAT_KEYSTORE_PASSWORD`
 (Alias `rotaskat`). Angelegt hat ihn einmalig

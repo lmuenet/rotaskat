@@ -1,10 +1,16 @@
 name: Release
 
 # Ein Tag wie v0.1.0 baut eine signierte APK und haengt sie an ein GitHub
-# Release. Von dort laden die Mitspieler sie herunter.
+# Release. Von dort laden die Mitspieler sie herunter. Per Hand gestartet legt
+# der Workflow das Tag selbst auf den gewaehlten Stand.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version ohne v, z. B. 0.1.0'
+        required: true
 
 permissions:
   contents: write
@@ -17,10 +23,12 @@ jobs:
 
       - name: Version aus dem Tag ableiten
         id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          name="${GITHUB_REF_NAME#v}"
+          name="${INPUT_VERSION:-${GITHUB_REF_NAME#v}}"
           if ! [[ "$name" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME hat nicht die Form vX.Y.Z"
+            echo "::error::Version $name hat nicht die Form X.Y.Z"
             exit 1
           fi
           # Android installiert ein Update nur bei hoeherem versionCode.
@@ -90,6 +98,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Rotaskat ${{ steps.version.outputs.name }}
+          tag_name: v${{ steps.version.outputs.name }}
+          target_commitish: ${{ github.sha }}
           prerelease: true
           files: rotaskat-${{ steps.version.outputs.name }}.apk
           body: |
